@@ -1,0 +1,196 @@
+.emptyContent {
+    height: 100% !important;
+    text-align: center;
+}
+
+.taskModule {
+    height: 100% !important;
+
+    .formContainer {
+        width: 100%;
+        padding-right: 0.8rem;
+        padding-left: 2.0rem;
+        padding-top: 0.8rem;
+        height: 75% !important;
+    }
+
+    .inputField {
+        width: 75%
+    }
+
+    .cellStyles {
+        margin-top: 10px !important,
+    }
+
+    .toggleButton {
+        margin-top: 5px !important,
+    }
+
+    .fontItalic {
+        font-style: italic !important;
+    }
+
+    .footerContainer {
+        position: absolute !important;
+        bottom: 5px;
+        left: 0;
+        padding-right: 0.8rem;
+        padding-left: 0.8rem;
+        width: 100%;
+        padding-bottom: 0.8rem;
+
+        .buttonContainer {
+            display: inline;
+            margin-right:4px;
+        }
+    }
+}
+
+
+.emptyContent {
+    text-align: center;
+}
+.ml-0 {
+    margin-left: 0px !important;
+}
+
+.mr-left-sm {
+    margin-left: 0.5rem !important;
+}
+
+.mr-0 {
+    margin-right: 0px !important;
+}
+
+.mr-top-sm {
+    margin-top: 0.5rem !important;
+}
+
+.mr-top {
+    margin-top: 0.9375rem !important;
+}
+
+.mr-btm-sm {
+    margin-bottom: 0.5rem !important;
+}
+
+.mr-btm {
+    margin-bottom: 0.9375rem !important;
+}
+
+.mr-rt {
+    margin-right: 0.9375rem;
+}
+
+.mr-lt {
+    margin-left: 0.9375rem;
+}
+.textColor {
+    color: deepskyblue;
+}
+
+.listComponent {
+    height: 100% !important;
+    overflow-y: hidden;
+    overflow-x: auto;
+}
+.formContentSecondContainer {
+    width: 100%;
+    padding-right: 0.8rem;
+    padding-left: 0.8rem;
+    margin-top: 0.8rem;
+    overflow-y: hidden;
+    height: 97% !important;
+}
+.formContentContainer {
+        overflow-y: auto !important;
+        height: 80% !important;
+    }
+
+    .footerContainer {
+        position: relative !important;
+        bottom: 0;
+        left: 0;
+        padding: 0 !important;
+        width: 100%;
+    }
+.formContentContainer.GridBrdPD {
+    height: 85% !important;
+}
+
+.jl {
+    box-shadow: none !important;
+}
+
+.ja {
+    box-shadow: none !important;
+}
+
+.GridBrdPD .ui-grid .ui-segment {
+    border-bottom: 1px solid #e9e9e9;
+    padding: 0em;
+    box-shadow: none !important;
+}
+
+.GridBrdPD .ui-grid .ui-segment .GridTitle {
+    padding: 0.625rem;
+    font-weight: bold;
+}
+
+.GridBrdPD .ui-grid .ui-segment .ui-menubutton {
+    padding-left: 1em;
+    position: relative;
+    padding-top: 0.5em;
+}
+
+.GridBrdPD .ui-grid .ui-segment .ui-menubutton .f4x758q .root-51 {
+    font-size: large;
+    font-weight: bold;
+}
+
+.GridBrdPD .ui-grid .ui-segment .ui-menubutton .f4x758q .root-51 {
+    font-size: large;
+    font-weight: bold;
+}
+
+.bg-transparent {
+    background: transparent !important;
+}
+
+.page_hide {
+    display: none !important;
+}
+
+.paginationBtns .ui-list li.ui-list__item, .paginationBtns .ui-flex ul.ms-FocusZone.ui-list li {
+    min-height: inherit;
+    background: transparent !important;
+    color: #6264A7 !important;
+    padding-right: 0px;
+    font-weight: bold;
+}
+.ts-embedded-container > base-tab.content-child > .base-tab.thread-right-rail,
+.ts-embedded-container > .content-child > .base-tab,
+.messages-header-v2 ~ .ts-tab-content .base-tab {
+    margin-top: 0px !important;
+}
+.px-sm {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+}
+
+.px-md {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+ul#menubutton-menu-5 > li.ui-box.ui-menu__item__wrapper > a.ui-menu__item {
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+}
+button.popUpBtn {
+    padding: 0px;
+    width: 150px;
+}
+
+.MeetingDetails{
+    width: 50%;
+}

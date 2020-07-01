@@ -1,0 +1,92 @@
+﻿// <copyright file="Incident.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// </copyright>
+
+namespace Microsoft.Teams.Apps.Bart.Models
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.Teams.Apps.Bart.Models.TableEntities;
+    using Newtonsoft.Json;
+
+    /// <summary>
+    /// Class containing incident details.
+    /// </summary>
+    public class Incident
+    {
+        /// <summary>
+        /// Gets or sets description.
+        /// </summary>
+        [JsonProperty("description")]
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Gets or sets short description.
+        /// </summary>
+        [JsonProperty("short_description")]
+        public string Short_Description { get; set; }
+
+        /// <summary>
+        /// Gets or sets status.
+        /// </summary>
+        [JsonProperty("state")]
+        public string Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets priority.
+        /// </summary>
+        [JsonProperty("priority")]
+        public string Priority { get; set; }
+
+        /// <summary>
+        /// Gets or sets sys_id.
+        /// </summary>
+        [JsonProperty("sys_id")]
+        public string Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident number.
+        /// </summary>
+        [JsonProperty("number")]
+        public string Number { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident created datetime.
+        /// </summary>
+        [JsonProperty("sys_created_on")]
+        public string CreatedOn { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident updated datetime.
+        /// </summary>
+        [JsonProperty("sys_updated_on")]
+        public string UpdatedOn { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident created datetime.
+        /// </summary>
+        [JsonProperty("work_notes")]
+        public string WorkNotes { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident urgency.
+        /// </summary>
+        [JsonProperty("urgency")]
+        public string Urgency { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident created datetime.
+        /// </summary>
+        [JsonProperty("impact")]
+        public string Impact { get; set; }
+
+        /// <summary>
+        /// Gets or sets associated webex bridge.
+        /// </summary>
+        [JsonProperty("bridge")]
+        public ConferenceRoomEntity Bridge { get; set; }
+
+    }
+}

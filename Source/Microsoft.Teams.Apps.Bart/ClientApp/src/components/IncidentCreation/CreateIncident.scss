@@ -1,0 +1,49 @@
+.emptyContent {
+    height: 100% !important;
+    text-align: center;
+}
+
+.taskModule {
+    height: 100% !important;
+
+    .formContainer {
+        width: 100%;
+        padding-right: 0.8rem;
+        padding-left: 2.0rem;
+        padding-top: 0.8rem;
+        height: 85% !important;
+        overflow-y: auto;
+    }
+
+    .inputField {
+        width: 75%
+    }
+
+    .cellStyles {
+        margin-top: 10px !important,
+    }
+
+    .toggleButton {
+        margin-top: 5px !important,
+    }
+
+    .fontItalic {
+        font-style: italic !important;
+    }
+
+    .footerContainer {
+        position: absolute !important;
+        bottom: 5px;
+        left: 0;
+        padding-right: 0.8rem;
+        padding-left: 0.8rem;
+        width: 100%;
+        padding-bottom: 0.8rem;
+
+        .buttonContainer {
+            display: inline;
+            float: right;
+            margin-right:4px;
+        }
+    }
+}
