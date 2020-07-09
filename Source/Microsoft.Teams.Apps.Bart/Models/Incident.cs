@@ -83,10 +83,17 @@ namespace Microsoft.Teams.Apps.Bart.Models
         public string Impact { get; set; }
 
         /// <summary>
-        /// Gets or sets associated webex bridge.
+        /// Gets or sets associated webex bridge code.
         /// </summary>
         [JsonProperty("bridge")]
-        public ConferenceRoomEntity Bridge { get; set; }
+        public string Bridge { get; set; }
+
+        /// <summary>
+        /// Gets or sets associated webex bridge.
+        /// </summary>
+        [JsonProperty("bridgeDetails")]
+
+        public ConferenceRoomEntity BridgeDetails { get; set; }
 
     }
 }

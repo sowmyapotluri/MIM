@@ -353,4 +353,8 @@
     <value>I can only support below commands.</value>
     <comment>Text to be displayed in help card</comment>
   </data>
+  <data name="EditWorkstream" xml:space="preserve">
+    <value>Edit workstream</value>
+    <comment>Subtitle for task module to edit workstreams</comment>
+  </data>
 </root>

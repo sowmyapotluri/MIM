@@ -123,14 +123,15 @@ namespace Microsoft.Teams.Apps.Bart
                 (MainDialog)provider.GetService(typeof(MainDialog)),
                 (ITokenHelper)provider.GetService(typeof(ITokenHelper)),
                 (IActivityStorageProvider)provider.GetService(typeof(IActivityStorageProvider)),
-                (IServiceNowProvider)provider.GetService(typeof(ServiceNowProvider)),
+                (IServiceNowProvider)provider.GetService(typeof(IServiceNowProvider)),
                 (TelemetryClient)provider.GetService(typeof(TelemetryClient)),
                 (IUserConfigurationStorageProvider)provider.GetService(typeof(IUserConfigurationStorageProvider)),
                 (IIncidentStorageProvider)provider.GetService(typeof(IIncidentStorageProvider)),
                 this.Configuration["AppBaseUri"],
                 this.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"],
                 this.Configuration["TenantId"],
-                new MicrosoftAppCredentials(this.Configuration["MicrosoftAppId"], this.Configuration["MicrosoftAppPassword"])));
+                new MicrosoftAppCredentials(this.Configuration["MicrosoftAppId"], this.Configuration["MicrosoftAppPassword"]),
+                (IConferenceBridgesStorageProvider)provider.GetService(typeof(IConferenceBridgesStorageProvider))));
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

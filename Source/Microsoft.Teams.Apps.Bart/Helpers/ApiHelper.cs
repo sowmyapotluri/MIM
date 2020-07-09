@@ -93,11 +93,11 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
         /// <returns>API response instance for POST request.</returns>
         public async Task<HttpResponseMessage> PatchAsync(string url, string token, string payload = "", Dictionary<string, string> headers = null)
         {
-            using (var client = this.clientFactory.CreateClient("GraphApiHelper"))
+            using (var client = this.clientFactory.CreateClient("ApiHelper"))
             {
                 var request = new HttpRequestMessage(HttpMethod.Patch, url);
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
                 if (!string.IsNullOrEmpty(payload))
                 {
                     request.Content = new StringContent(payload, Encoding.UTF8, "application/json");

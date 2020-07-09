@@ -187,6 +187,15 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Edit workstream.
+        /// </summary>
+        public static string EditWorkstream {
+            get {
+                return ResourceManager.GetString("EditWorkstream", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Something went wrong and I can’t do that right now. Try again in a few minutes..
         /// </summary>
         public static string ExceptionResponse {

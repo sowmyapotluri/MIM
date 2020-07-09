@@ -4,31 +4,17 @@
 }
 
 .taskModule {
-    height: 100% !important;
-
+    height: 97% !important;
+    overflow-y: hidden;
     .formContainer {
         width: 100%;
         padding-right: 0.8rem;
-        padding-left: 2.0rem;
+        padding-left: 0.8rem;
         padding-top: 0.8rem;
-        height: 85% !important;
-        overflow-y: auto;
-    }
-
-    .inputField {
-        width: 75%
-    }
-
-    .cellStyles {
-        margin-top: 10px !important,
-    }
-
-    .toggleButton {
-        margin-top: 5px !important,
-    }
-
-    .fontItalic {
-        font-style: italic !important;
+        height: 95% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        
     }
 
     .footerContainer {
@@ -42,8 +28,81 @@
 
         .buttonContainer {
             display: inline;
-            float: right;
             margin-right:4px;
         }
     }
+}
+.emptyContent {
+    text-align: center;
+}
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+h1, .h1 {
+  font-size: 2rem;
+}
+
+h2, .h2 {
+  font-size: 1.75rem;
+}
+
+h3, .h3 {
+  font-size: 1.5rem;
+}
+
+h4, .h4 {
+  font-size: 1.25rem;
+}
+
+h5, .h5 {
+  font-size: 1rem;
+}
+
+h6, .h6 {
+  font-size: .75rem;
+}
+
+b,
+strong, .bold {
+  font-weight: bolder;
+}
+
+small {
+  font-size: 80%;
+}
+.select-wrapper{width: auto;}
+.select-wrapper .ui-dropdown__container {
+    width: 100%;
+}
+.select-wrapper .ui-flex {
+    width: 100%;
+    margin-right: 0px !important;
+}
+textarea.ui-textarea.inputField.textarea {
+    height: 100px;
+}
+.ui-flex > span.ui-text {
+    margin-bottom: 1px;
+    font-size: small;
+}
+.inputField > .ui-input__input {
+    height: 35px;
+}
+.xs-small-input{width: auto;}
+.xs-small-input .ui-dropdown__container {
+    width: 100%;
+}
+.md-input{width: auto;}
+.md-input .ui-dropdown__container{width: auto;}
+.button-icon-pos {
+    position: absolute;
+    z-index: 1;
+    margin-left: 5px;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: bold;
 }

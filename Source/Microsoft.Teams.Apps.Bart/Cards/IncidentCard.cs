@@ -22,8 +22,9 @@ namespace Microsoft.Teams.Apps.Bart.Cards
         /// Get welcome card attachment.
         /// </summary>
         /// <returns>Adaptive card attachment for bot introduction and bot commands to start with.</returns>
-        public static Attachment GetIncidentAttachment(Incident incident, bool update = false)
+        public static Attachment GetIncidentAttachment(Incident incident, string title = "New Incident reported", bool update = true)
         {
+
             AdaptiveCard card = new AdaptiveCard("1.2")
             {
                 Body = new List<AdaptiveElement>
@@ -46,7 +47,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                            {
                                                Weight = AdaptiveTextWeight.Bolder,
                                                Size = AdaptiveTextSize.Medium,
-                                               Text = update ? "Incident closed" : "New Incident reported",
+                                               Text = title,
                                            },
                                        },
                                    },
@@ -61,7 +62,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                                Size = AdaptiveTextSize.Medium,
                                                Color = incident.Priority == "7" ? AdaptiveTextColor.Attention: AdaptiveTextColor.Default,
                                                HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                               Text = incident.Priority == "7" ? "High Priority" : "Priority",
+                                               Text = incident.Priority == "7" ? "High Priority!" : "Priority",
                                            },
                                        },
                                    },
@@ -97,7 +98,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                         Size = AdaptiveTextSize.Default,
                                         Color = AdaptiveTextColor.Good,
                                         HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                        Text = "New",
+                                        Text = update ? "New" : "Updated",
                                     },
                                 },
                             },
@@ -145,7 +146,6 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                                     },
                                                     IncidentId = incident.Id,
                                                     IncidentNumber = incident.Number,
-                                                    //BridgeId = incident.Bridge.Code,
                                                 },
                                             },
                                         },
@@ -159,25 +159,41 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                         Facts = BuildFactSet(incident, false),
                     },
                 },
-                //Actions = new List<AdaptiveAction>
-                //{
-                //    new AdaptiveShowCardAction
-                //    {
-                //        Title = "View workstream",
-                //        Card = new AdaptiveCard("1.2")
-                //        {
-                //            //Actions = AddPrompts(prompts, questionId, userQuestion, 0, 3),
-                //        },
-                //    },
-                //    new AdaptiveShowCardAction
-                //    {
-                //        Title = "Change Status",
-                //        Card = new AdaptiveCard("1.2")
-                //        {
-                //            //Actions = AddPrompts(prompts, questionId, userQuestion, 0, 3),
-                //        },
-                //    },
-                //},
+                Actions = new List<AdaptiveAction>
+                {
+                    new AdaptiveSubmitAction
+                    {
+                        Title = "View workstream",
+                        Data = new AdaptiveSubmitActionData
+                        {
+                            Msteams = new TaskModuleAction(Strings.OtherRooms, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.EditWorkstream, ActivityReferenceId = incident.Number }) }),
+                        },
+                    },
+                    //new AdaptiveSubmitAction
+                    //{
+                    //    Title = "Change Status",
+                    //    Data = new Data { Text = "UPDATEACTIVITY" },
+                    //},
+                    new AdaptiveShowCardAction
+                    {
+                        Title = "Change Status",
+                        Card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 0))
+                        {
+                            Body = new List<AdaptiveElement>
+                            {
+                                GetAdaptiveChoiceSetTitleInput(),
+                                GetAdaptiveChoiceSetStatusInput(),
+                            },
+                            Actions = new List<AdaptiveAction>
+                            {
+                                new AdaptiveSubmitAction
+                                {
+                                    Data = new ChangeTicketStatusPayload { IncidentId = incident.Id, IncidentNumber = incident.Number },
+                                },
+                            },
+                        },
+                    },
+                },
             };
             var adaptiveCardAttachment = new Attachment()
             {
@@ -222,24 +238,85 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     Title = "Short Description",
                     Value = incident.Short_Description,
                 });
-                if (incident.Bridge != null)
+                if (incident.BridgeDetails.Code != null)
                 {
                     factList.Add(new AdaptiveFact
                     {
                         Title = "Incident conference bridge",
-                        Value = string.Format("[{0}]({1})", incident.Bridge.Code, incident.Bridge.BridgeURL),
+                        Value = string.Format("[{0}]({1})", incident.BridgeDetails.Code, incident.BridgeDetails.BridgeURL),
                     });
                 }
-                factList.Add(new AdaptiveFact
-                {
-                    Title = "Description",
-                    Value = incident.Description,
-                });
             }
 
             return factList;
         }
 
+        /// <summary>
+        /// Return the appropriate status choices for ticket status.
+        /// </summary>
+        /// <returns>An adaptive element which contains the dropdown choices.</returns>
+        private static AdaptiveChoiceSetInput GetAdaptiveChoiceSetStatusInput()
+        {
+            AdaptiveChoiceSetInput choiceSet = new AdaptiveChoiceSetInput
+            {
+                Id = nameof(ChangeTicketStatusPayload.Action),
+                IsMultiSelect = false,
+                Style = AdaptiveChoiceInputStyle.Compact,
+            };
+
+            choiceSet.Value = ChangeTicketStatusPayload.NewAction;
+            choiceSet.Choices = new List<AdaptiveChoice>
+                    {
+                        new AdaptiveChoice
+                        {
+                            Title = "New",
+                            Value = ChangeTicketStatusPayload.NewAction,
+                        },
+                        new AdaptiveChoice
+                        {
+                            Title = "Suspended",
+                            Value = ChangeTicketStatusPayload.SuspendedAction,
+                        },
+                        new AdaptiveChoice
+                        {
+                            Title = "Service Restored",
+                            Value = ChangeTicketStatusPayload.RestoredAction,
+                        },
+                    };
+
+            return choiceSet;
+        }
+
+        /// <summary>
+        /// Return the appropriate status choices for ticket status.
+        /// </summary>
+        /// <returns>An adaptive element which contains the dropdown choices.</returns>
+        private static AdaptiveChoiceSetInput GetAdaptiveChoiceSetTitleInput()
+        {
+            AdaptiveChoiceSetInput choiceSet = new AdaptiveChoiceSetInput
+            {
+                Id = nameof(ChangeTicketStatusPayload.Title),
+                IsMultiSelect = false,
+                Style = AdaptiveChoiceInputStyle.Compact,
+            };
+
+            choiceSet.Value = ChangeTicketStatusPayload.NewAction;
+            choiceSet.Choices = new List<AdaptiveChoice>
+                    {
+                        new AdaptiveChoice
+                        {
+                            Title = "Incident New",
+                            Value = "Incident New",
+                        },
+                        new AdaptiveChoice
+                        {
+                            Title = "Incident Closed",
+                            Value = "Incident Closed",
+                        },
+                    };
+
+            return choiceSet;
+        }
         public static Attachment TestCard(string contents)
         {
             AdaptiveCard card = new AdaptiveCard("1.2")

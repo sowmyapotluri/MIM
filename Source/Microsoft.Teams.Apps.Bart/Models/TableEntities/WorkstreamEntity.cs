@@ -12,21 +12,29 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
     public class WorkstreamEntity : TableEntity
     {
         /// <summary>
-        /// Gets or sets initializes a new instance of the <see cref="IncidentEntity"/> class.
+        /// Initializes a new instance of the <see cref="WorkstreamEntity"/> class.
         /// </summary>
-        //public IncidentEntity()
-        //{
-        //    this.PartitionKey = "msteams";
-        //}
+        /// <param name="incident">Incident entity.</param>
+        public WorkstreamEntity(Incident incident)
+        {
+            this.PartitionKey = incident.Number;
+        }
 
         /// <summary>
-        /// Gets or sets user Active Directory object Id.
+        /// Initializes a new instance of the <see cref="WorkstreamEntity"/> class.
         /// </summary>
-        //public string UserAdObjectId
-        //{
-        //    get { return this.RowKey; }
-        //    set { this.RowKey = value; }
-        //}
+        public WorkstreamEntity()
+        {
+        }
+
+        /// <summary>
+        /// Gets or sets object Id.
+        /// </summary>
+        public string Id
+        {
+            get { return this.RowKey; }
+            set { this.RowKey = value; }
+        }
 
         /// <summary>
         /// Gets or sets id of the message sent to the user.
@@ -42,5 +50,11 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         /// Gets or sets windows time zone converted from IANA.
         /// </summary>
         public string Description { get; set; }
+
+        public bool Status { get; set; }
+
+        public string AssignedToId { get; set; }
+
+        public bool InActive { get; set; }
     }
 }

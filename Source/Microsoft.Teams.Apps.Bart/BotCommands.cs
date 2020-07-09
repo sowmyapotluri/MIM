@@ -28,5 +28,10 @@ namespace Microsoft.Teams.Apps.Bart
         /// Help command.
         /// </summary>
         public const string Help = "HELP";
+
+        /// <summary>
+        /// Get workstreams command.
+        /// </summary>
+        public const string EditWorkstream = "EDIT WORKSTREAM";
     }
 }

@@ -5,6 +5,7 @@
 namespace Microsoft.Teams.Apps.Bart.Providers.Storage
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
@@ -54,18 +55,42 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Get user configuration.
+        /// Get a workstream.
         /// </summary>
-        /// <param name="userObjectIdentifer">Active Directory object Id of user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        public async Task<WorkstreamEntity> GetAsync(string userObjectIdentifer)
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <param name="id">Workstream id.</param>
+        /// <returns>A workstream item.</returns>
+        public async Task<WorkstreamEntity> GetAsync(string incidentNumber, string id)
         {
             try
             {
                 await this.EnsureInitializedAsync().ConfigureAwait(false);
-                var retrieveOperation = TableOperation.Retrieve<IncidentEntity>("msteams", userObjectIdentifer);
+                var retrieveOperation = TableOperation.Retrieve<IncidentEntity>(incidentNumber, id);
                 var result = await this.cloudTable.ExecuteAsync(retrieveOperation).ConfigureAwait(false);
                 return (WorkstreamEntity)result?.Result;
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get all workstream.
+        /// </summary>
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <returns>List of all workstreams.</returns>
+        public async Task<List<WorkstreamEntity>> GetAllAsync(string incidentNumber)
+        {
+            try
+            {
+                await this.EnsureInitializedAsync().ConfigureAwait(false);
+                string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, incidentNumber);
+                var query = new TableQuery<WorkstreamEntity>().Where(partitionKeyCondition);
+                TableContinuationToken continuationToken = null;
+                var queryResult = await this.cloudTable.ExecuteQuerySegmentedAsync(query, continuationToken).ConfigureAwait(false);
+                return queryResult.Results;
             }
             catch (Exception ex)
             {
@@ -78,7 +103,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         /// Add or update user configuration.
         /// </summary>
         /// <param name="workstream">User configuration entity.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <returns>A task that represents whether it was successfull or not.</returns>
         public async Task<bool> AddAsync(WorkstreamEntity workstream)
         {
             try
@@ -86,6 +111,27 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
                 await this.EnsureInitializedAsync().ConfigureAwait(false);
                 TableOperation insertOrMergeOperation = TableOperation.InsertOrReplace(workstream);
                 TableResult result = await this.cloudTable.ExecuteAsync(insertOrMergeOperation).ConfigureAwait(false);
+                return result.Result != null;
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Delete a workstream.
+        /// </summary>
+        /// <param name="workstream">User configuration entity.</param>
+        /// <returns>Boolean value to confirm deletion.</returns>
+        public async Task<bool> DeleteAsync(WorkstreamEntity workstream)
+        {
+            try
+            {
+                await this.EnsureInitializedAsync().ConfigureAwait(false);
+                TableOperation deleteOperation = TableOperation.Delete(workstream);
+                TableResult result = await this.cloudTable.ExecuteAsync(deleteOperation).ConfigureAwait(false);
                 return result.Result != null;
             }
             catch (Exception ex)

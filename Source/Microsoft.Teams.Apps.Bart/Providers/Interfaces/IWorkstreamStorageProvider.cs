@@ -4,6 +4,7 @@
 
 namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
 
@@ -13,17 +14,33 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
     public interface IWorkstreamStorageProvider
     {
         /// <summary>
-        /// Add or update user configuration.
+        /// Add or update workstream.
         /// </summary>
         /// <param name="workstreamEntity">User configuration entity.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <returns>A task that represents whether it was successfull or not.</returns>
         Task<bool> AddAsync(WorkstreamEntity workstreamEntity);
 
         /// <summary>
-        /// Get user configuration.
+        /// Get all workstream.
         /// </summary>
-        /// <param name="incidentNumber">Active Directory object Id of user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        Task<WorkstreamEntity> GetAsync(string incidentNumber);
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <returns>List of all workstreams.</returns>
+
+        Task<List<WorkstreamEntity>> GetAllAsync(string incidentNumber);
+
+        /// <summary>
+        /// Get a workstream.
+        /// </summary>
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <param name="id">Workstream id.</param>
+        /// <returns>A workstream item.</returns>
+        Task<WorkstreamEntity> GetAsync(string incidentNumber, string id);
+
+        /// <summary>
+        /// Delete a workstream.
+        /// </summary>
+        /// <param name="workstreamEntity">User configuration entity.</param>
+        /// <returns>Boolean value to confirm deletion.</returns>
+        Task<bool> DeleteAsync(WorkstreamEntity workstreamEntity);
     }
 }

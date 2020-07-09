@@ -89,12 +89,13 @@
         /// <returns>Event response object.</returns>
         public async Task<dynamic> UpdateIncidentAsync(Incident incident, string token)
         {
-            var httpResponseMessage = await this.apiHelper.PatchAsync(this.updateIncident, token, JsonConvert.SerializeObject(incident)).ConfigureAwait(false);
+            string payload = JsonConvert.SerializeObject(incident, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            var httpResponseMessage = await this.apiHelper.PatchAsync(string.Format(this.updateIncident, incident.Id), token, payload).ConfigureAwait(false);
             var content = await httpResponseMessage.Content.ReadAsStringAsync();
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
-                return JsonConvert.DeserializeObject<dynamic>(content);
+                return JsonConvert.DeserializeObject<ServiceNowResponse>(content).Incident;
             }
 
             var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(content);

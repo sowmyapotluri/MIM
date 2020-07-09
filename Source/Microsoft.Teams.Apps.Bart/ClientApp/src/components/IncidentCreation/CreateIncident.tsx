@@ -7,6 +7,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { mergeStyleSets } from 'office-ui-fabric-react/lib/Styling';
 import { AxiosResponse } from "axios";
 import "./CreateIncident.scss";
+import "./bootstrap-grid.css";
 import { isNullOrUndefined } from 'util';
 import { ApplicationInsights, SeverityLevel } from '@microsoft/applicationinsights-web';
 import { ReactPlugin, withAITracking } from '@microsoft/applicationinsights-react-js';
@@ -14,33 +15,11 @@ import { createBrowserHistory } from "history";
 let reactPlugin = new ReactPlugin();
 const browserHistory = createBrowserHistory({ basename: '' });
 
-
-const DayPickerStrings: IDatePickerStrings = {
-    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-    shortMonths: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-    shortDays: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
-
-    goToToday: '',
-    prevMonthAriaLabel: 'Go to previous month',
-    nextMonthAriaLabel: 'Go to next month',
-    prevYearAriaLabel: 'Go to previous year',
-    nextYearAriaLabel: 'Go to next year',
-    closeButtonAriaLabel: 'Close date picker'
-};
-
-const controlClass = mergeStyleSets({
-    control: {
-        margin: '0 0 15px 0',
-        maxWidth: '300px'
-    }
-});
-
-export interface ICreateSessionProps {
+export interface ICreateIncidentProps {
 
 }
 
-export interface ICreateSessionState {
+export interface ICreateIncidentState {
     id: string,
     shortDescription: string,
     description: string,
@@ -58,6 +37,8 @@ export interface IWorkstream {
     description: string,
     assignedTo: string,
     completed: boolean,
+    assignedToId: string,
+    inActive: boolean
 }
 
 export interface IConferenceRooms {
@@ -68,7 +49,7 @@ export interface IConferenceRooms {
 }
 
 export interface IIncident {
-    bridge: IConferenceRooms,
+    bridge: string,
     description: string,
     impact: string,
     number: string,
@@ -78,6 +59,7 @@ export interface IIncident {
     sys_created_on: string,
     sys_id: string,
     sys_updated_on: string,
+    bridgeDetails: IConferenceRooms
 }
 
 export const Priority = {
@@ -87,7 +69,7 @@ export const Priority = {
 }
 const todayDate: Date = new Date();
 
-export default class CreateIncident extends React.Component<ICreateSessionProps, ICreateSessionState> {
+export default class CreateIncident extends React.Component<ICreateIncidentProps, ICreateIncidentState> {
 
     private readonly newSessionStatus = "New";
     private readonly type = "Session";
@@ -101,7 +83,7 @@ export default class CreateIncident extends React.Component<ICreateSessionProps,
     telemetry: any = undefined;
     // appInsights: ApplicationInsights;
 
-    constructor(props: ICreateSessionProps) {
+    constructor(props: ICreateIncidentProps) {
         super(props);
         initializeIcons();
         let startDate: Date = new Date();
@@ -113,6 +95,8 @@ export default class CreateIncident extends React.Component<ICreateSessionProps,
             description: "",
             assignedTo: "",
             completed: false,
+            assignedToId: "",
+            inActive: false,
         }
         this.state = {
             id: "",
@@ -258,10 +242,14 @@ export default class CreateIncident extends React.Component<ICreateSessionProps,
             loader: true
         });
         let event = {
-            Short_Description: this.shortDescription,
-            Description: this.description,
-            Priority: 7,
-            Bridge: this.state.selectedBridge
+            Incident: {
+                Short_Description: this.shortDescription,
+                Description: this.description,
+                Priority: 7,
+                Bridge: this.state.selectedBridge.code,
+                bridgeDetails: this.state.selectedBridge
+            },
+            Workstreams: this.state.workstreams
         };
         await fetch("/api/IncidentApi/CreateIncidentAsync", {
             method: "POST",
@@ -291,9 +279,10 @@ export default class CreateIncident extends React.Component<ICreateSessionProps,
                 // this.setState({
                 //     loader: false
                 // }, () => {
-                    let toBot: IIncident = response;
-                    toBot.bridge = this.state.selectedBridge;
-                    microsoftTeams.tasks.submitTask(toBot);
+                let toBot: IIncident = response;
+                toBot.bridge = this.state.selectedBridge.code.toString();
+                toBot.bridgeDetails = this.state.selectedBridge;
+                microsoftTeams.tasks.submitTask(toBot);
                 // });
             }
             else {
@@ -308,8 +297,10 @@ export default class CreateIncident extends React.Component<ICreateSessionProps,
         let workstream: IWorkstream = {
             priority: this.state.workstreams.length + 1,
             description: "",
-            assignedTo: "",
+            assignedTo: "12345",
             completed: false,
+            assignedToId: "123456",
+            inActive: false
         }
         this.setState({
             workstreams: [...this.state.workstreams, workstream],
@@ -372,25 +363,35 @@ export default class CreateIncident extends React.Component<ICreateSessionProps,
             let items = this.state.workstreams.map(item => item.priority)
             return (
                 <div>
-                    <Flex gap="gap.small">
-                        <Dropdown
-                            items={items}
-                            defaultValue={items[index]}
-                            value={items[index]}
-                            placeholder="Start typing a name"
-                            noResultsMessage="We couldn't find any matches."
-                            onSelectedChange={this.setPriority}
-                            key={"number" + index}
-                        />
-                        <Input className="inputField" defaultValue={workstream.description} value={workstream.description} key={"description" + index} placeholder="Description" fluid name="description" onChange={(e) => this.onWorkstreamDescriptionChange(e, index)} />
-                        <Input className="inputField" defaultValue={workstream.assignedTo} value={workstream.assignedTo} key={"assignedto" + index} placeholder="Assigned to" fluid name="assignedto" onChange={(e) => this.onWorkstreamAssigneeChange(e, index)} />
-                        <Dropdown
-                            search
-                            items={inputItems}
-                            placeholder="Type Text"
-                            noResultsMessage="We couldn't find any matches."
-                        />
-                    </Flex>
+                    <div className="row my-1">
+                        <div className="col-md-2 pr-1">
+                            <Dropdown
+                                className="xs-small-input"
+                                items={items}
+                                defaultValue={items[index]}
+                                value={items[index]}
+                                placeholder="Start typing a name"
+                                noResultsMessage="We couldn't find any matches."
+                                onSelectedChange={this.setPriority}
+                                key={"number" + index}
+                            />
+                        </div>
+                        <div className="col-md-5 px-1">
+                            <Input className="inputField" defaultValue={workstream.description} value={workstream.description} key={"description" + index} placeholder="Description" fluid name="description" onChange={(e) => this.onWorkstreamDescriptionChange(e, index)} />
+                        </div>
+                        <div className="col-md-3 px-1">
+                            <Input className="inputField" defaultValue={workstream.assignedTo} value={workstream.assignedTo} key={"assignedto" + index} placeholder="Assigned to" fluid name="assignedto" onChange={(e) => this.onWorkstreamAssigneeChange(e, index)} />
+                        </div>
+                        <div className="col-md-2 pl-1">
+                            <Dropdown
+                                className="md-input"
+                                search
+                                items={inputItems}
+                                placeholder="Type Text"
+                                noResultsMessage="We couldn't find any matches."
+                            />
+                        </div>
+                    </div>
                     <div hidden={index !== this.state.workstreams.length - 1}>
                         <Flex gap="gap.smaller">
                             <Icon iconName="add" className="pos-rel ft-18 ft-bld icon-sm" />
@@ -415,80 +416,98 @@ export default class CreateIncident extends React.Component<ICreateSessionProps,
             return (
                 <div className="taskModule">
                     <div className="formContainer">
-
-                        <Flex gap="gap.smaller">
-                            <Text content="Individual requesting incident" />
-                        </Flex>
+                        <div className="row">
+                            <div className="col-md-12">
+                                <Flex gap="gap.smaller">
+                                    <Text content="Individual requesting incident" />
+                                </Flex>
+                            </div>
+                        </div>
                         <div className="custom">
-                            <Flex gap="gap.smaller">
-                                <Input className="inputField" value={this.state.id} name="txtPasskey" />
-                            </Flex>
-                            <br />
-                            <Flex gap="gap.smaller">
-                                <Text content="Short description(Note: max 250 characters)" />
-                            </Flex>
-                            <Flex gap="gap.smaller">
-                                <Input fluid className="inputField" defaultValue={this.shortDescription} placeholder="Search title goes here" name="shortDescriptionTitle" onChange={this.onShortDescriptionChange} />
-                            </Flex>
-                            <br />
-                            <Flex gap="gap.large">
-                                <FlexItem grow>
-                                    <Flex gap="gap.smaller" column>
+                            <div className="row">
+                                <div className="col-md-4 col-lg-4">
+                                    <Input className="inputField" fluid value={this.state.id} name="txtPasskey" />
+                                </div>
+                            </div>
+                            <div className="row my-3">
+                                <div className="col-md-8">
+                                    <Flex gap="gap.smaller">
+                                        <Text content="Short description(Note: max 250 characters)" />
+                                    </Flex>
+                                    <Flex gap="gap.smaller">
+                                        <Input fluid className="inputField" defaultValue={this.shortDescription} placeholder="Search title goes here" name="shortDescriptionTitle" onChange={this.onShortDescriptionChange} />
+                                    </Flex>
+                                </div>
+                                <div className="col-md-4">
+                                    <Flex gap="gap.smaller">
                                         <Text content="Notes" />
+                                    </Flex>
+                                    <Flex gap="gap.smaller">
                                         <Input fluid className="inputField" defaultValue={this.notes} placeholder="Search title goes here" name="notesTitle" onChange={this.onNotesChange} />
+
                                     </Flex>
-                                </FlexItem>
-                                <FlexItem push>
-                                    <Flex gap="gap.smaller" column>
-                                        <Text content="Status" />
-                                        <Dropdown
-                                            search
-                                            items={inputItems}
-                                            placeholder="Type Text"
-                                            noResultsMessage="We couldn't find any matches."
-                                        />
-                                    </Flex>
-                                </FlexItem>
-                            </Flex>
-                            <br />
-                            <Flex gap="gap.smaller">
-                                <FlexItem>
+                                </div>
+                            </div>
+                            <div className="row my-3">
+                                <div className="col-md-8">
                                     <Flex gap="gap.smaller" column>
                                         <Text content="Description of the reported problem" />
-                                        <TextArea fluid className="inputField" defaultValue={this.description} placeholder="Search title goes here" name="descriptionTitle" onChange={this.onDescriptionChange} />
-                                        <Flex column>
-                                            <Text content="TSC request" />
-                                            <Checkbox label="Did this request originated from technology support center" />
-                                        </Flex>
+                                        <TextArea fluid className="inputField textarea" defaultValue={this.description} placeholder="Search title goes here" name="descriptionTitle" onChange={this.onDescriptionChange} />
                                     </Flex>
-                                </FlexItem>
-                                <FlexItem>
-                                    <Flex column>
-                                        <Flex gap="gap.smaller" column>
-                                            <Text content="Conference bridge" />
-                                            <Dropdown
-                                                items={bridgeCodes}
-                                                placeholder="Type Text"
-                                                noResultsMessage="We couldn't find any matches."
-                                                onSelectedChange={this.setBridge}
-                                            />
-                                        </Flex>
-                                        <Flex gap="gap.smaller" column>
-                                            <Text content="Priority" />
-                                            <Dropdown
-                                                items={Object.keys(Priority)}
-                                                placeholder="Type Text"
-                                                noResultsMessage="We couldn't find any matches."
-                                                onSelectedChange={this.onPriorityChange}
-                                            />
-                                            {/* <Input className="inputField" value={this.state.title} placeholder="Search title goes here" name="txtTitle" /> */}
-                                        </Flex>
+                                </div>
+                                <div className="col-md-4">
+
+                                    <Flex gap="gap.smaller" column>
+                                        <Text content="Conference bridge" />
+                                        <Dropdown
+                                            className="select-wrapper"
+                                            items={bridgeCodes}
+                                            placeholder="Type Text"
+                                            noResultsMessage="We couldn't find any matches."
+                                            onSelectedChange={this.setBridge}
+                                        />
                                     </Flex>
-                                </FlexItem>
-                            </Flex>
+                                    <Flex gap="gap.smaller" column className="mt-3">
+                                        <Text content="Priority" />
+                                        <Dropdown
+                                            className="select-wrapper"
+                                            items={Object.keys(Priority)}
+                                            placeholder="Type Text"
+                                            noResultsMessage="We couldn't find any matches."
+                                            onSelectedChange={this.onPriorityChange}
+                                        />
+                                        {/* <Input className="inputField" value={this.state.title} placeholder="Search title goes here" name="txtTitle" /> */}
+                                    </Flex>
+                                </div>
+                            </div>
+                            <div className="row my-3">
+                                <div className="col-md-12">
+                                    <Flex>
+                                        <Text content="TSC request" className="mt-1 mr-2" />
+                                        <Checkbox label="Did this request originated from technology support center" />
+                                    </Flex>
+                                </div>
+                            </div>
                         </div>
-                        <Text size="large" content="Create workstream" />
-                        <br />
+                        <div className="row my-3">
+                            <div className="col-md-12">
+                                <Text className="h5 bold" content="Create workstream" />
+                            </div>
+                        </div>
+                        <div className="row my-1">
+                            <div className="col-md-2 pr-1">
+                                <Text content="Priorty" />
+                            </div>
+                            <div className="col-md-5 px-1">
+                                <Text content="Description" />
+                            </div>
+                            <div className="col-md-3 px-1">
+                                <Text content="Assigned to" />
+                            </div>
+                            <div className="col-md-2 pl-1">
+                                <Text content="Status" />
+                            </div>
+                        </div>
                         {workstreamBlock}
 
                         <div className="footerContainer">
