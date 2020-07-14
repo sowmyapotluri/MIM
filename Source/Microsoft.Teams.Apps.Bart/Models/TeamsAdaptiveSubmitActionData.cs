@@ -32,5 +32,15 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// Gets or sets incident bridge number.
         /// </summary>
         public string BridgeId { get; set; }
+
+        /// <summary>
+        /// Gets or sets text.
+        /// </summary>
+        public string Text { get; set; }
+
+        /// <summary>
+        /// Gets or sets text.
+        /// </summary>
+        public string Activity { get; set; }
     }
 }

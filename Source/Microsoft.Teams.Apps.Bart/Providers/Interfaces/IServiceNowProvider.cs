@@ -16,7 +16,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
     public interface IServiceNowProvider
     {
         /// <summary>
-        /// Create new meeting for given room.
+        /// Create new incident.
         /// </summary>
         /// <param name="incident"><see cref="Incident"/> object. </param>
         /// <param name="token">Active Directory access token.</param>
@@ -30,5 +30,21 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// <param name="token">Active Directory access token.</param>
         /// <returns>Event response object.</returns>
         Task<dynamic> UpdateIncidentAsync(Incident incident, string token);
+
+        /// <summary>
+        /// Get incidents.
+        /// </summary>
+        /// <param name="searchQuery">Query for searching. </param>
+        /// <param name="token">Active Directory access token.</param>
+        /// <returns>Event response object.</returns>
+        Task<dynamic> SearchIncidentAsync(string searchQuery, string token);
+
+        /// <summary>
+        /// Get incidents based on factors.
+        /// </summary>
+        /// <param name="commandId">Query for searching. </param>
+        /// <param name="token">Active Directory access token.</param>
+        /// <returns>Event response object.</returns>
+        Task<dynamic> GetIncidentAsync(string commandId, string token);
     }
 }

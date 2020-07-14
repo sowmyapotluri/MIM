@@ -68,7 +68,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
         /// <summary>
         /// Storage provider to perform fetch operation on UserConfiguration table.
         /// </summary>
-        private readonly IUserConfigurationStorageProvider userConfigurationStorageProvider;
+        private readonly IIncidentStorageProvider incidentStorageProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IncidentApiController"/> class.
@@ -77,15 +77,15 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
         /// <param name="tokenHelper">Generating and validating JWT token.</param>
         /// <param name="serviceNowProvider">Helper class which exposes methods required for incident creation.</param>
         /// <param name="conferenceBridgesStorageProvider">Helper class which exposes methods required for getting and updating conference room status.</param>
-        /// <param name="userConfigurationStorageProvider">Storage provider to perform fetch operation on UserConfiguration table.</param>
+        /// <param name="incidentStorageProvider">Storage provider to perform fetch operation on UserConfiguration table.</param>
         /// <param name="workstreamStorageProvider">Helper class which exposes methods required for workstream creation.</param>
-        public IncidentApiController(TelemetryClient telemetryClient, ITokenHelper tokenHelper, IServiceNowProvider serviceNowProvider, IConferenceBridgesStorageProvider conferenceBridgesStorageProvider, IUserConfigurationStorageProvider userConfigurationStorageProvider, IWorkstreamStorageProvider workstreamStorageProvider)
+        public IncidentApiController(TelemetryClient telemetryClient, ITokenHelper tokenHelper, IServiceNowProvider serviceNowProvider, IConferenceBridgesStorageProvider conferenceBridgesStorageProvider, IIncidentStorageProvider incidentStorageProvider, IWorkstreamStorageProvider workstreamStorageProvider)
         {
             this.telemetryClient = telemetryClient;
             this.tokenHelper = tokenHelper;
             this.serviceNowProvider = serviceNowProvider;
             this.conferenceBridgesStorageProvider = conferenceBridgesStorageProvider;
-            this.userConfigurationStorageProvider = userConfigurationStorageProvider;
+            this.incidentStorageProvider = incidentStorageProvider;
             this.workstreamStorageProvider = workstreamStorageProvider;
         }
 
@@ -121,6 +121,19 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 if (bridgeStatus.Available)
                 {
                     Incident incidentCreated = await this.serviceNowProvider.CreateIncidentAsync(incident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa");
+                    var incidentTableEntry = new IncidentEntity
+                    {
+                        PartitionKey = incidentCreated.Number,
+                        RowKey = incidentCreated.Id,
+                        Description = incidentCreated.Description,
+                        ShortDescription = incidentCreated.Short_Description,
+                        BridgeId = incident.BridgeDetails.Code,
+                        BridgeLink = incident.BridgeDetails.BridgeURL,
+                        Status = incidentCreated.Status,
+                        Priority = incidentCreated.Priority,
+                        Scope = incident.Scope,
+                    };
+                    await this.incidentStorageProvider.AddAsync(incidentTableEntry).ConfigureAwait(false);
                     //if (string.IsNullOrEmpty(incident.Id))
                     //{
                     //    bridgeStatus.Available = false;
@@ -129,6 +142,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                     if (workstreams.Count > 0)
                     {
                         WorkstreamEntity workstreamEntity = new WorkstreamEntity(incidentCreated);
+                        List<string> workstreamString = new List<string>();
                         foreach (var workstream in workstreams)
                         {
                             if (!string.IsNullOrEmpty(workstream.Description))
@@ -140,6 +154,9 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                                 workstreamEntity.Priority = workstream.Priority;
                                 workstreamEntity.Status = workstream.Status;
 
+                                workstreamString.Add($"{workstreamEntity.Priority}: {workstream.Description}: {workstream.AssignedTo}: {workstream.Status}");
+                                incidentCreated.WorkNotes = string.Join(',', workstreamString);
+                                await this.serviceNowProvider.UpdateIncidentAsync(incidentCreated, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
                                 await this.workstreamStorageProvider.AddAsync(workstreamEntity).ConfigureAwait(false);
                             }
                         }
@@ -163,7 +180,6 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 return this.StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-
 
         /// <summary>
         /// Get claims of user.

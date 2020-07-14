@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
+using Newtonsoft.Json;
+
 namespace Microsoft.Teams.Apps.Bart.Models
 {
     /// <summary>
@@ -12,16 +14,19 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// <summary>
         /// Gets or sets the id of user in AAD.
         /// </summary>
+        [JsonProperty("id")]
         public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the upn of user in AAD.
         /// </summary>
-        public string UserPrincipleName { get; set; }
+        [JsonProperty("userPrincipalName")]
+        public string UserPrincipalName { get; set; }
 
         /// <summary>
         /// Gets or sets the display name of user in AAD.
         /// </summary>
+        [JsonProperty("displayName")]
         public string DisplayName { get; set; }
     }
 }

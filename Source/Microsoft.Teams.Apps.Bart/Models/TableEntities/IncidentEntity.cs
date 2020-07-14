@@ -48,9 +48,25 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
 
         public string AssignedTo { get; set; }
 
+        public string AssignedToId { get; set; }
+
         public string TeamActivityId { get; set; }
 
         public string ServiceUrl { get; set; }
+
+        public string Description { get; set; }
+
+        public string ShortDescription { get; set; }
+
+        public string Scope { get; set; }
+
+        public string Status { get; set; }
+
+        public string CreatedById { get; set; }
+
+        public string BridgeId { get; set; }
+
+        public string BridgeLink { get; set; }
 
     }
 }

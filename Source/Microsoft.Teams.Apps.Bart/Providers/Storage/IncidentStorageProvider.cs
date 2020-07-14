@@ -5,6 +5,7 @@
 namespace Microsoft.Teams.Apps.Bart.Providers.Storage
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
@@ -84,9 +85,55 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
             try
             {
                 await this.EnsureInitializedAsync().ConfigureAwait(false);
-                TableOperation insertOrMergeOperation = TableOperation.InsertOrReplace(incident);
+                TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(incident);
                 TableResult result = await this.cloudTable.ExecuteAsync(insertOrMergeOperation).ConfigureAwait(false);
                 return result.Result != null;
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get incidents.
+        /// </summary>
+        /// <param name="botCommand">Condition for searching.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        public async Task<List<IncidentEntity>> GetIncidentsAsync(string botCommand)
+        {
+            try
+            {
+                string condition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.NotEqual, string.Empty);
+                switch (botCommand)
+                {
+                    case "newincidents":
+                        condition = TableQuery.GenerateFilterCondition("Status", QueryComparisons.NotEqual, "1");
+                        break;
+                    case "suspendedincidents":
+                        condition = TableQuery.GenerateFilterCondition("Status", QueryComparisons.NotEqual, "2");
+                        break;
+                    case "servicerestoredincidents":
+                        condition = TableQuery.GenerateFilterCondition("Status", QueryComparisons.NotEqual, "3");
+                        break;
+                    case "allincidents":
+                        condition = TableQuery.GenerateFilterCondition("Status", QueryComparisons.NotEqual, "1");
+                        break;
+                }
+                await this.EnsureInitializedAsync().ConfigureAwait(false);
+                var query = new TableQuery<IncidentEntity>().Where(condition);
+                TableContinuationToken continuationToken = null;
+                var incidents = new List<IncidentEntity>();
+
+                do
+                {
+                    var queryResult = await this.cloudTable.ExecuteQuerySegmentedAsync(query, continuationToken).ConfigureAwait(false);
+                    incidents.AddRange(queryResult?.Results);
+                    continuationToken = queryResult?.ContinuationToken;
+                }
+                while (continuationToken != null);
+                return incidents;
             }
             catch (Exception ex)
             {

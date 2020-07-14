@@ -14,17 +14,17 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// <summary>
         /// Action that set the status as new.
         /// </summary>
-        public const string NewAction = "New";
+        public const string NewAction = "1";
 
         /// <summary>
         /// Action that set the status as suspended.
         /// </summary>
-        public const string SuspendedAction = "Suspended";
+        public const string SuspendedAction = "2";
 
         /// <summary>
         /// Action that set the status as service restored.
         /// </summary>
-        public const string RestoredAction = "Service Restored";
+        public const string RestoredAction = "3";
 
         /// <summary>
         /// Gets or sets the incident id.

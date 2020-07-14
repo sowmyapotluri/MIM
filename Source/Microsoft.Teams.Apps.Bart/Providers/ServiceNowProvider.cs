@@ -33,6 +33,36 @@
         private readonly string searchUsers = "/api/now/table/sys_user?sysparm_query=name%3D{0}&sysparm_limit=10";
 
         /// <summary>
+        /// Search incidents URL.
+        /// </summary>
+        private readonly string searchIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}&sysparm_display_value=true&sysparm_limit=10";
+
+        /// <summary>
+        /// Get all incidents URL.
+        /// </summary>
+        private readonly string allIncidents = "/api/now/table/incident?sysparm_display_value=true&sysparm_limit=10";
+
+        /// <summary>
+        /// Get new incidents URL.
+        /// </summary>
+        private readonly string newIncidents = "/api/now/table/incident?sysparm_query=state%3D1&sysparm_limit=10";
+
+        /// <summary>
+        /// Get suspended incidents URL.
+        /// </summary>
+        private readonly string suspendedIncidents = "/api/now/table/incident?sysparm_query=state%3D2&sysparm_limit=10";
+
+        /// <summary>
+        /// Get service restored incidents URL.
+        /// </summary>
+        private readonly string serviceRestoredIncidents = "/api/now/table/incident?sysparm_query=state%3D3&sysparm_limit=10";
+
+        /// <summary>
+        /// Get recent incidents URL.
+        /// </summary>
+        private readonly string recentIncidents = "/api/now/table/incident?sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
+
+        /// <summary>
         /// API helper service for making post and get calls to Graph.
         /// </summary>
         private readonly IApiHelper apiHelper;
@@ -128,6 +158,77 @@
             var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(content);
 
             this.telemetryClient.TrackTrace($"Search users API failure- url: {this.searchUsers}, response-code: {errorResponse.Error.StatusCode}, response-content: {errorResponse.Error.ErrorMessage}, request-id: {errorResponse.Error.InnerError.RequestId}", SeverityLevel.Warning);
+            var failureResponse = new
+            {
+                StatusCode = httpResponseMessage.StatusCode,
+                ErrorResponse = errorResponse,
+            };
+            return failureResponse;
+        }
+
+        /// <summary>
+        /// Get incidents.
+        /// </summary>
+        /// <param name="searchQuery">Query for searching. </param>
+        /// <param name="token">Active Directory access token.</param>
+        /// <returns>Event response object.</returns>
+        public async Task<dynamic> SearchIncidentAsync(string searchQuery, string token)
+        {
+            var httpResponseMessage = await this.apiHelper.GetAsync(string.Format(this.searchIncidents, searchQuery), token).ConfigureAwait(false);
+            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return JsonConvert.DeserializeObject<ServiceNowListResponse>(content).Incident;
+            }
+
+            var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(content);
+
+            this.telemetryClient.TrackTrace($"Search incidents API failure- url: {this.searchUsers}, response-code: {errorResponse.Error.StatusCode}, response-content: {errorResponse.Error.ErrorMessage}, request-id: {errorResponse.Error.InnerError.RequestId}", SeverityLevel.Warning);
+            var failureResponse = new
+            {
+                StatusCode = httpResponseMessage.StatusCode,
+                ErrorResponse = errorResponse,
+            };
+            return failureResponse;
+        }
+
+        /// <summary>
+        /// Get incidents based on factors.
+        /// </summary>
+        /// <param name="commandId">Query for searching. </param>
+        /// <param name="token">Active Directory access token.</param>
+        /// <returns>Event response object.</returns>
+        public async Task<dynamic> GetIncidentAsync(string commandId, string token)
+        {
+            string url = this.recentIncidents;
+            switch (commandId)
+            {
+                case "newincidents":
+                    url = this.newIncidents;
+                    break;
+                case "suspendedincidents":
+                    url = this.suspendedIncidents;
+                    break;
+                case "servicerestoredincidents":
+                    url = this.serviceRestoredIncidents;
+                    break;
+                case "allincidents":
+                    url = this.allIncidents;
+                    break;
+            }
+
+            var httpResponseMessage = await this.apiHelper.GetAsync(url, token).ConfigureAwait(false);
+            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return JsonConvert.DeserializeObject<ServiceNowListResponse>(content).Incident;
+            }
+
+            var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(content);
+
+            this.telemetryClient.TrackTrace($"Search incidents API failure- url: {this.searchUsers}, response-code: {errorResponse.Error.StatusCode}, response-content: {errorResponse.Error.ErrorMessage}, request-id: {errorResponse.Error.InnerError.RequestId}", SeverityLevel.Warning);
             var failureResponse = new
             {
                 StatusCode = httpResponseMessage.StatusCode,

@@ -92,8 +92,14 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// Gets or sets associated webex bridge.
         /// </summary>
         [JsonProperty("bridgeDetails")]
-
         public ConferenceRoomEntity BridgeDetails { get; set; }
+
+        /// <summary>
+        /// Gets or sets scope.
+        /// </summary>
+        [JsonProperty("scope")]
+        public string Scope { get; set; }
+
 
     }
 }

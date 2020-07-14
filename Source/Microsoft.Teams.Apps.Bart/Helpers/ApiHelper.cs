@@ -47,11 +47,11 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
         /// <returns>API response instance for GET request.</returns>
         public async Task<HttpResponseMessage> GetAsync(string url, string token, Dictionary<string, string> headers = null)
         {
-            using (var client = this.clientFactory.CreateClient("GraphApiHelper"))
+            using (var client = this.clientFactory.CreateClient("ApiHelper"))
             {
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
                 return await client.SendAsync(request).ConfigureAwait(false);
             }
         }

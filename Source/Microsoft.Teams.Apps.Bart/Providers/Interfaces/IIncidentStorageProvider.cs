@@ -4,6 +4,7 @@
 
 namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
 
@@ -25,5 +26,12 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// <param name="incidentNumber">Active Directory object Id of user.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         Task<IncidentEntity> GetAsync(string partitionKey, string rowKey);
+
+        /// <summary>
+        /// Get incidents.
+        /// </summary>
+        /// <param name="condition">Condition for searching.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        Task<List<IncidentEntity>> GetIncidentsAsync(string condition);
     }
 }

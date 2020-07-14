@@ -29,7 +29,8 @@ export interface ICreateIncidentState {
     status: string,
     workstreams: IWorkstream[],
     allBridges: IConferenceRooms[],
-    selectedBridge: IConferenceRooms
+    selectedBridge: IConferenceRooms,
+    users: IUser[]
 }
 
 export interface IWorkstream {
@@ -39,6 +40,12 @@ export interface IWorkstream {
     completed: boolean,
     assignedToId: string,
     inActive: boolean
+}
+
+export interface IUser {
+    id: string,
+    displayName: string,
+    userPrincipalName: string
 }
 
 export interface IConferenceRooms {
@@ -59,7 +66,7 @@ export interface IIncident {
     sys_created_on: string,
     sys_id: string,
     sys_updated_on: string,
-    bridgeDetails: IConferenceRooms
+    bridgeDetails: IConferenceRooms,
 }
 
 export const Priority = {
@@ -113,7 +120,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 channelId: "",
                 code: 0,
                 bridgeURL: ""
-            }
+            },
+            users: []
         }
         this.shortDescription = "";
         this.description = "";
@@ -237,6 +245,85 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     //     this.shortDescription = (e.target as HTMLInputElement).value;
     // }
 
+    private getUsers = (e: React.SyntheticEvent<HTMLElement, Event>, data?: DropdownProps) => {
+        var searchQuery = data!.searchQuery!
+        this.searchUsers(searchQuery).then((res: any) => {
+            // console.log("Users", res)
+
+            // this.setState({
+            //     users: res
+            // },()=>{
+            //     console.log("Users", this.state.users)
+            // });
+        });
+    }
+
+    private userAssigned = (e: React.SyntheticEvent<HTMLElement, Event>, v?: DropdownProps) => {
+        let selectedUser = v!.value! as { header: string, content: string };
+        let index = v! as { id: number }
+        console.log("Users chanegs", selectedUser, index.id)
+        var workstream = this.state.workstreams;
+        workstream[index.id].assignedTo = selectedUser.header;
+        workstream[index.id].assignedToId = selectedUser.content;
+
+        this.setState({
+            workstreams: workstream
+        });
+
+    }
+
+    private searchUsers = async (searchQuery: string) => {
+        await fetch("/api/ResourcesApi/GetUsersAsync?fromFlag=1&searchQuery=" + searchQuery, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + this.token
+            },
+        }).then(async (res) => {
+            if (res.status === 401) {
+                const response = await res.json();
+                if (response) {
+                    // this.setState({
+                    //     errorResponseDetail: {
+                    //         errorMessage: response.message,
+                    //         statusCode: response.code,
+                    //     }
+                    // })
+                }
+
+                // this.setState({ authorized: false });
+                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+            }
+            else if (res.status === 200) {
+                let response = await res.json();
+                this.setState({
+                    loader: false,
+                    users: response
+                });
+                // let values: IUser[] = response.map((users: IUser)=>{
+                //     let user: IUser = {
+                //         displayName: users.displayName,
+                //         id: users.id,
+                //         userPrincipalName: users.userPrincipalName
+                //     }
+                // })
+                // for (let i =0; i < response.length; i++){
+                //     let user: IUser = {
+                //         displayName: response[i].displayName,
+                //         id: response[i].id,
+                //         userPrincipalName: response[i].userPrincipalName
+                //     }
+                //     values.push(user);
+                // }
+            }
+            else {
+                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
+                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+            }
+
+        });
+    }
+
     private createIncident = async () => {
         this.setState({
             loader: true
@@ -297,9 +384,9 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         let workstream: IWorkstream = {
             priority: this.state.workstreams.length + 1,
             description: "",
-            assignedTo: "12345",
+            assignedTo: "",
             completed: false,
-            assignedToId: "123456",
+            assignedToId: "",
             inActive: false
         }
         this.setState({
@@ -358,6 +445,16 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             'Service Restored'
         ];
 
+        const userInput = this.state.users.map((user) => {
+            console.log("UserDetails", user)
+            return ({
+                header: user.displayName,
+                content: user.userPrincipalName
+            });
+        });
+
+        console.log("User", userInput)
+
         let workstreamBlock: JSX.Element[] = (this.state.workstreams.map((workstream: IWorkstream, index: number) => {
             console.log("Refresh!", this.state.workstreams[index].description, workstream.description)
             let items = this.state.workstreams.map(item => item.priority)
@@ -380,7 +477,19 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                             <Input className="inputField" defaultValue={workstream.description} value={workstream.description} key={"description" + index} placeholder="Description" fluid name="description" onChange={(e) => this.onWorkstreamDescriptionChange(e, index)} />
                         </div>
                         <div className="col-md-3 px-1">
-                            <Input className="inputField" defaultValue={workstream.assignedTo} value={workstream.assignedTo} key={"assignedto" + index} placeholder="Assigned to" fluid name="assignedto" onChange={(e) => this.onWorkstreamAssigneeChange(e, index)} />
+                            {/* <Input className="inputField" defaultValue={workstream.assignedTo} value={workstream.assignedTo} key={"assignedto" + index} placeholder="Assigned to" fluid name="assignedto" onChange={(e) => this.onWorkstreamAssigneeChange(e, index)} /> */}
+                            <Dropdown
+                                className="md-input"
+                                clearable
+                                search
+                                id={index.toString()}
+                                onSearchQueryChange={this.getUsers}
+                                items={userInput}
+                                placeholder="Start typing a name"
+                                onSelectedChange={this.userAssigned}
+                                noResultsMessage="We couldn't find any matches."
+                                value={workstream.assignedTo}
+                            />
                         </div>
                         <div className="col-md-2 pl-1">
                             <Dropdown
@@ -395,7 +504,9 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                     <div hidden={index !== this.state.workstreams.length - 1}>
                         <Flex gap="gap.smaller">
                             <Icon iconName="add" className="pos-rel ft-18 ft-bld icon-sm" />
-                            <Button text content="Add another workstream" onClick={this.addWorkstreams} />
+                            <Button text content="Add another workstream" onClick={this.addWorkstreams}
+                                disabled={this.state.workstreams[this.state.workstreams.length - 1].description === ""
+                                    && this.state.workstreams[this.state.workstreams.length - 1].assignedTo === ""} />
                         </Flex>
                     </div>
                     <br />
