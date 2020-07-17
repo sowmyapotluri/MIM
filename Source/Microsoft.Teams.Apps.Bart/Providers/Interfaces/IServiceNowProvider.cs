@@ -45,6 +45,14 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// <param name="commandId">Query for searching. </param>
         /// <param name="token">Active Directory access token.</param>
         /// <returns>Event response object.</returns>
-        Task<dynamic> GetIncidentAsync(string commandId, string token);
+        Task<dynamic> GetIncidentAsync(string commandId, string searchQuery, string token);
+
+        /// <summary>
+        /// Get incident.
+        /// </summary>
+        /// <param name="incidentId">Incident id. </param>
+        /// <param name="token">Active Directory access token.</param>
+        /// <returns>Event response object.</returns>
+        Task<dynamic> GetIncidentAsync(string incidentId, string token);
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="BookAMeetingBot.cs" company="Microsoft Corporation">
+﻿// <copyright file="BartBot.cs" company="Microsoft Corporation">
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
@@ -10,7 +10,6 @@ namespace Microsoft.Teams.Apps.Bart.Bots
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using AdaptiveCards;
     using Microsoft.ApplicationInsights;
     using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.Bot.Builder;
@@ -25,13 +24,12 @@ namespace Microsoft.Teams.Apps.Bart.Bots
     using Microsoft.Teams.Apps.Bart.Models;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
     using Microsoft.Teams.Apps.Bart.Providers.Interfaces;
-    using Microsoft.Teams.Apps.Bart.Providers.Storage;
     using Microsoft.Teams.Apps.Bart.Resources;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     /// <summary>
-    /// Implements the core logic of the Book A Room bot.
+    /// Implements the core logic of the BART bot.
     /// </summary>
     /// <typeparam name="T">Generic class.</typeparam>
     public class BartBot<T> : TeamsActivityHandler
@@ -83,7 +81,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         private readonly IActivityStorageProvider activityStorageProvider;
 
         /// <summary>
-        /// Storage provider to perform insert, update and delete operation on UserFavorites table.
+        /// Storage provider to perform insert and update operation on ServiceNow table.
         /// </summary>
         private readonly IServiceNowProvider serviceNowProvider;
 
@@ -98,13 +96,20 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         private readonly IUserConfigurationStorageProvider userConfigurationStorageProvider;
 
         /// <summary>
-        /// Helper class which exposes methods required for incident creation.
+        /// Storage provider to perform insert, update and delete operation on ConferenceBridges table.
         /// </summary>
         private readonly IConferenceBridgesStorageProvider conferenceBridgesStorageProvider;
 
+        /// <summary>
+        /// App credentials.
+        /// </summary>
         private readonly MicrosoftAppCredentials microsoftAppCredentials;
 
+        /// <summary>
+        /// Storage provider to perform insert, update and delete operation on Incidents table.
+        /// </summary>
         private readonly IIncidentStorageProvider incidentStorageProvider;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BartBot{T}"/> class.
@@ -117,6 +122,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         /// <param name="serviceNowProvider">Provider for exposing methods required to perform meeting creation.</param>
         /// <param name="telemetryClient">Telemetry client for logging events and errors.</param>
         /// <param name="userConfigurationStorageProvider">Storage provider to perform insert and update operation on UserConfiguration table.</param>
+        /// <param name="incidentStorageProvider">Storage provider to perform insert and update operation on Incidents table.</param>
         /// <param name="appBaseUri">Application base URL.</param>
         /// <param name="instrumentationKey">Instrumentation key for application insights logging.</param>
         /// <param name="tenantId">Valid tenant id for which bot will operate.</param>
@@ -171,50 +177,148 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             }
         }
 
-        protected override async Task<MessagingExtensionResponse> OnTeamsMessagingExtensionQueryAsync( ITurnContext<IInvokeActivity> turnContext, MessagingExtensionQuery query, CancellationToken cancellationToken)
+        /// <summary>
+        /// Invoked when user clicks on "Add new incident" button on messaging extension.
+        /// </summary>
+        /// <param name="turnContext">Context object containing information cached for a single turn of conversation with a user.</param>
+        /// <param name="action">Action to be performed.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        /// <returns>Response of messaging extension action.</returns>
+        /// <remarks>
+        /// Reference link: https://docs.microsoft.com/en-us/dotnet/api/microsoft.bot.builder.teams.teamsactivityhandler.onteamsmessagingextensionfetchtaskasync?view=botbuilder-dotnet-stable.
+        /// </remarks>
+        protected override async Task<MessagingExtensionActionResponse> OnTeamsMessagingExtensionFetchTaskAsync(
+            ITurnContext<IInvokeActivity> turnContext,
+            MessagingExtensionAction action,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+
+                var activity = turnContext.Activity;
+                turnContext.Activity.TryGetChannelData<TeamsChannelData>(out var teamsChannelData);
+                var token = this.tokenHelper.GenerateAPIAuthToken(activity.From.AadObjectId, activity.ServiceUrl, activity.From.Id, jwtExpiryMinutes: 60);
+                string description = string.Empty;  // variable to hold preloaded description if available.
+                if (JObject.Parse(activity.Value.ToString()).ContainsKey("messagePayload"))
+                {
+                    description = JObject.Parse(activity.Value.ToString())["messagePayload"]["body"]["content"].ToString();
+                }
+
+                return await Task.FromResult(new MessagingExtensionActionResponse
+                {
+                    Task = new TaskModuleContinueResponse
+                    {
+                        Value = new TaskModuleTaskInfo
+                        {
+                            Height = "large",
+                            Width = "large",
+                            Title = Strings.CreateIncident,
+                            Url = string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}&description={3}", this.appBaseUri, this.instrumentationKey, token, description),
+
+                        },
+                    },
+                });
+
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// Invoked when the user submits a create new incident from Messaging Extensions.
+        /// </summary>
+        /// <param name="turnContext">Context object containing information cached for a single turn of conversation with a user.</param>
+        /// <param name="action">Action to be performed.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        /// <returns>Response of messaging extension action.</returns>
+        /// <remarks>
+        /// Reference link: https://docs.microsoft.com/en-us/dotnet/api/microsoft.bot.builder.teams.teamsactivityhandler.onteamsmessagingextensionsubmitactionasync?view=botbuilder-dotnet-stable.
+        /// </remarks>
+        protected override async Task<MessagingExtensionActionResponse> OnTeamsMessagingExtensionSubmitActionAsync(
+            ITurnContext<IInvokeActivity> turnContext,
+            MessagingExtensionAction action,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var postedObject = ((JObject)turnContext.Activity.Value).GetValue("data", StringComparison.OrdinalIgnoreCase).ToObject<Incident>();
+
+                if (postedObject == null)
+                {
+                    return default;
+                }
+
+                var bridge = await this.conferenceBridgesStorageProvider.GetAsync(postedObject.Bridge).ConfigureAwait(false);
+                var userConversationId = await this.userConfigurationStorageProvider.GetAsync(turnContext.Activity.From.AadObjectId).ConfigureAwait(false);
+                var connector = new ConnectorClient(new Uri(turnContext.Activity.ServiceUrl), this.microsoftAppCredentials);
+                turnContext.Activity.TryGetChannelData<TeamsChannelData>(out var teamsChannelData);
+                var card = new IncidentCard(postedObject).GetIncidentAttachment();
+
+                // Sending cards to team and personal chat
+                var cardDetailsInTeams = await this.SendCardToTeamAsync(turnContext, card, bridge.ChannelId, cancellationToken).ConfigureAwait(false);
+                var cardDetailsInChat = await connector.Conversations.SendToConversationAsync(userConversationId.ConversationId, (Activity)MessageFactory.Attachment(card));
+
+                IncidentEntity incidentEntity = new IncidentEntity {
+                    PartitionKey = postedObject.Number,
+                    TeamConversationId = cardDetailsInTeams.Id,
+                    TeamActivityId = cardDetailsInTeams.ActivityId,
+                    ServiceUrl = cardDetailsInTeams.ServiceUrl,
+                    RowKey = postedObject.Id,
+                    PersonalConversationId = userConversationId.ConversationId,
+                    PersonalActivityId = cardDetailsInChat.Id,
+                };
+                var insert = await this.incidentStorageProvider.AddAsync(incidentEntity).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+
+                this.telemetryClient.TrackException(ex);
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// Invoked when the user opens the messaging extension or searching any content in it.
+        /// </summary>
+        /// <param name="turnContext">Context object containing information cached for a single turn of conversation with a user.</param>
+        /// <param name="query">Contains messaging extension query keywords.</param>
+        /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
+        /// <returns>Messaging extension response object to fill compose extension section.</returns>
+        /// <remarks>
+        /// https://docs.microsoft.com/en-us/dotnet/api/microsoft.bot.builder.teams.teamsactivityhandler.onteamsmessagingextensionqueryasync?view=botbuilder-dotnet-stable.
+        /// </remarks>
+        protected override async Task<MessagingExtensionResponse> OnTeamsMessagingExtensionQueryAsync(ITurnContext<IInvokeActivity> turnContext, MessagingExtensionQuery query, CancellationToken cancellationToken)
         {
             var turnContextActivity = turnContext?.Activity;
             try
             {
                 turnContextActivity.TryGetChannelData<TeamsChannelData>(out var teamsChannelData);
+                var messageExtensionQuery = JsonConvert.DeserializeObject<MessagingExtensionQuery>(turnContextActivity.Value.ToString());
+                var searchQuery = this.GetSearchQueryString(messageExtensionQuery);
+
+                return new MessagingExtensionResponse
+                {
+                    ComposeExtension = await SearchHelper.GetSearchResultAsync(searchQuery, messageExtensionQuery.CommandId, messageExtensionQuery.QueryOptions.Count, messageExtensionQuery.QueryOptions.Skip, turnContextActivity.LocalTimestamp, this.serviceNowProvider, this.incidentStorageProvider).ConfigureAwait(false),
+                };
+
                 //string expertTeamId = await this.configurationProvider.GetSavedEntityDetailAsync(ConfigurationEntityTypes.TeamId).ConfigureAwait(false);
 
                 //if (turnContext != null && teamsChannelData?.Team?.Id == expertTeamId && await this.IsMemberOfSmeTeamAsync(turnContext).ConfigureAwait(false))
                 //{
-                    var messageExtensionQuery = JsonConvert.DeserializeObject<MessagingExtensionQuery>(turnContextActivity.Value.ToString());
-                    var searchQuery = this.GetSearchQueryString(messageExtensionQuery);
 
-                    return new MessagingExtensionResponse
-                    {
-                        ComposeExtension = await SearchHelper.GetSearchResultAsync(searchQuery, messageExtensionQuery.CommandId, messageExtensionQuery.QueryOptions.Count, messageExtensionQuery.QueryOptions.Skip, turnContextActivity.LocalTimestamp, this.serviceNowProvider, this.incidentStorageProvider).ConfigureAwait(false),
-                    };
                 //}
 
-                //return new MessagingExtensionResponse
-                //{
-                //    ComposeExtension = new MessagingExtensionResult
-                //    {
-                //        Text = "Text",
-                //        Type = "message",
-                //    },
-                //};
             }
             catch (Exception ex)
             {
-                //this.logger.LogError(ex, $"Failed to handle the messaging extension command {turnContextActivity.Name}: {ex.Message}", SeverityLevel.Error);
+                this.telemetryClient.TrackException(ex);
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Get the value of the searchText parameter in the messaging extension query.
-        /// </summary>
-        /// <param name="query">Contains messaging extension query keywords.</param>
-        /// <returns>A value of the searchText parameter.</returns>
-        private string GetSearchQueryString(MessagingExtensionQuery query)
-        {
-            var messageExtensionInputText = query.Parameters.FirstOrDefault(parameter => parameter.Name.Equals(SearchTextParameterName, StringComparison.OrdinalIgnoreCase));
-            return messageExtensionInputText?.Value?.ToString();
         }
 
         /// <summary>
@@ -234,11 +338,13 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                 this.telemetryClient.TrackEvent("Bot installed", new Dictionary<string, string>() { { "User", activity.From.AadObjectId } });
                 var userStateAccessors = this.userState.CreateProperty<UserData>(nameof(UserData));
                 var userdata = await userStateAccessors.GetAsync(turnContext, () => new UserData()).ConfigureAwait(false);
+                await this.userConfigurationStorageProvider.AddAsync(new UserConfigurationEntity { UserAdObjectId = activity.From.AadObjectId, ConversationId = activity.Conversation.Id });
 
                 if (userdata?.IsWelcomeCardSent == null || userdata?.IsWelcomeCardSent == false)
                 {
                     userdata.IsWelcomeCardSent = true;
                     await userStateAccessors.SetAsync(turnContext, userdata).ConfigureAwait(false);
+                    await this.userConfigurationStorageProvider.AddAsync(new UserConfigurationEntity { UserAdObjectId = activity.From.AadObjectId, ConversationId = activity.Conversation.Id });
                     var welcomeCardImageUrl = new Uri(baseUri: new Uri(this.appBaseUri), relativeUri: "/images/welcome.jpg");
                     await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(WelcomeCard.GetWelcomeCardAttachment()), cancellationToken).ConfigureAwait(false);
                 }
@@ -260,6 +366,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             if (activity.MembersAdded?.Where(member => member.Id != activity.Recipient.Id).FirstOrDefault() != null)
             {
                 this.telemetryClient.TrackEvent("Bot uninstalled", new Dictionary<string, string>() { { "User", activity.From.AadObjectId } });
+                await this.userConfigurationStorageProvider.DeleteAsync(new UserConfigurationEntity { UserAdObjectId = activity.From.AadObjectId });
                 var userStateAccessors = this.userState.CreateProperty<UserData>(nameof(UserData));
                 var userdata = await userStateAccessors.GetAsync(turnContext, () => new UserData()).ConfigureAwait(false);
                 userdata.IsWelcomeCardSent = false;
@@ -318,9 +425,8 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             {
                 // Show task module to manage favorite rooms which is invoked from 'Favorite rooms' list card.
                 case BotCommands.CreateIncident:
-                    // activityReferenceId = postedValues.ActivityReferenceId;
                     this.telemetryClient.TrackTrace("Create incident executed.");
-                    return this.GetTaskModuleResponse(string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}", this.appBaseUri, this.instrumentationKey, token), Strings.AddFavTaskModuleSubtitle, "large", "large");
+                    return this.GetTaskModuleResponse(string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}", this.appBaseUri, this.instrumentationKey, token), Strings.CreateIncident, "large", "large");
 
                 case BotCommands.EditWorkstream:
                     this.telemetryClient.TrackTrace("Edit workstream executed.");
@@ -343,11 +449,16 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         /// <returns>A task that represents the work queued to execute.</returns>
         protected override async Task<TaskModuleResponse> OnTeamsTaskModuleSubmitAsync(ITurnContext<IInvokeActivity> turnContext, TaskModuleRequest taskModuleRequest, CancellationToken cancellationToken)
         {
-            var activity = turnContext.Activity;
             if (taskModuleRequest.Data == null)
             {
                 this.telemetryClient.TrackTrace("Request data obtained on task module submit action is null.");
                 await turnContext.SendActivityAsync(Strings.ExceptionResponse).ConfigureAwait(false);
+                return default;
+            }
+
+            if (((JObject)taskModuleRequest.Data).ContainsKey("output"))
+            {
+                this.telemetryClient.TrackTrace("Taskmodule submitted from EditWorkstream.");
                 return default;
             }
 
@@ -363,71 +474,27 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             var valuesFromTaskModule = JsonConvert.DeserializeObject<Incident>(taskModuleRequest.Data.ToString());
             if (valuesFromTaskModule != null)
             {
-                //IncidentEntity incidentEntity = new IncidentEntity();
-                //incidentEntity.PartitionKey = valuesFromTaskModule.Number;
-                //var activityId = turnContext.Activity.Id;
-                //var cId = turnContext.Activity.Conversation.Id;
-                //var messgae = await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(IncidentCard.GetIncidentAttachment(valuesFromTaskModule, false)), cancellationToken).ConfigureAwait(false);
-                //await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(IncidentCard.TestCard(JsonConvert.SerializeObject(messgae))), cancellationToken).ConfigureAwait(false);
-
-                //var attachment = new Attachment
-                //{
-                //    ContentType = AdaptiveCard.ContentType,
-                //    Content = IncidentCard.TestCard(JsonConvert.SerializeObject(messgae)),
-                //};
-
-                //var updateCardActivity = new Activity(ActivityTypes.Message)
-                //{
-                //    Id = activityId,
-                //    Conversation = new ConversationAccount { Id = cId },
-                //    Attachments = new List<Attachment> { attachment },
-                //};
-                //await turnContext.UpdateActivityAsync(updateCardActivity, cancellationToken).ConfigureAwait(false);
+                var channelDetails = await this.conferenceBridgesStorageProvider.GetAsync(valuesFromTaskModule.Bridge).ConfigureAwait(false);
                 var card = new IncidentCard(valuesFromTaskModule).GetIncidentAttachment();
                 var personalChatActivityId = await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(card), cancellationToken).ConfigureAwait(false);
-                ConversationResourceResponse teamCard = await this.SendCardToTeamAsync(turnContext, card, "19:7295b1ef36c64bf2a3052f02103b240c@thread.tacv2", cancellationToken).ConfigureAwait(false);
-                IncidentEntity incidentEntity = new IncidentEntity();
-                incidentEntity.PartitionKey = valuesFromTaskModule.Number;
-                incidentEntity.TeamConversationId = teamCard.Id;
-                incidentEntity.TeamActivityId = teamCard.ActivityId;
-                incidentEntity.ServiceUrl = teamCard.ServiceUrl;
-                incidentEntity.RowKey = valuesFromTaskModule.Id;
-                incidentEntity.PersonalConversationId = turnContext.Activity.Conversation.Id;
-                incidentEntity.PersonalActivityId = personalChatActivityId.Id;
-                var insert = await this.incidentStorageProvider.AddAsync(incidentEntity).ConfigureAwait(false);
+                ConversationResourceResponse teamCard = await this.SendCardToTeamAsync(turnContext, card, channelDetails.ChannelId, cancellationToken).ConfigureAwait(false);
+                IncidentEntity incidentEntity = new IncidentEntity
+                {
+                    PartitionKey = valuesFromTaskModule.Number,
+                    TeamConversationId = teamCard.Id,
+                    TeamActivityId = teamCard.ActivityId,
+                    ServiceUrl = teamCard.ServiceUrl,
+                    RowKey = valuesFromTaskModule.Id,
+                    PersonalConversationId = turnContext.Activity.Conversation.Id,
+                    PersonalActivityId = personalChatActivityId.Id,
+                };
+                await this.incidentStorageProvider.AddAsync(incidentEntity).ConfigureAwait(false);
             }
             else
             {
-                await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(WelcomeCard.GetWelcomeCardAttachment()), cancellationToken).ConfigureAwait(false);
+                this.telemetryClient.TrackTrace($"TaskModule Submitted values empty");
+                await turnContext.SendActivityAsync(activity: MessageFactory.Text("Taskmodule was empty"), cancellationToken).ConfigureAwait(false);
             }
-            //var message = valuesFromTaskModule.Text;
-            //var replyToId = valuesFromTaskModule.ReplyTo;
-
-            //if (message.Equals(BotCommands.MeetingFromTaskModule, StringComparison.OrdinalIgnoreCase))
-            //{
-            //    var attachment = SuccessCard.GetSuccessAttachment(valuesFromTaskModule, userConfiguration.WindowsTimezone);
-            //    var activityFromStorage = await this.activityStorageProvider.GetAsync(activity.From.AadObjectId, replyToId).ConfigureAwait(false);
-
-            //    if (!string.IsNullOrEmpty(replyToId))
-            //    {
-            //        var updateCardActivity = new Activity(ActivityTypes.Message)
-            //        {
-            //            Id = activityFromStorage.ActivityId,
-            //            Conversation = activity.Conversation,
-            //            Attachments = new List<Attachment> { attachment },
-            //        };
-            //        await turnContext.UpdateActivityAsync(updateCardActivity).ConfigureAwait(false);
-            //    }
-
-            //    await turnContext.SendActivityAsync(MessageFactory.Text(string.Format(CultureInfo.CurrentCulture, Strings.RoomBooked, valuesFromTaskModule.RoomName)), cancellationToken).ConfigureAwait(false);
-            //    }
-            //    else
-            //    {
-            //        if (!string.IsNullOrEmpty(replyToId))
-            //        {
-            //            await this.UpdateFavouriteCardAsync(turnContext, replyToId).ConfigureAwait(false);
-            //}
-            //    }
 
             return null;
         }
@@ -444,52 +511,55 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             await this.SendTypingIndicatorAsync(turnContext).ConfigureAwait(false);
 
             if (turnContext.Activity.Text == null && turnContext.Activity.Value != null && turnContext.Activity.Type == ActivityTypes.Message
-                && (!string.IsNullOrEmpty(JToken.Parse(turnContext.Activity.Value.ToString()).SelectToken("Action").ToString())
-                && string.IsNullOrEmpty(JToken.Parse(turnContext.Activity.Value.ToString()).SelectToken("Activity").ToString())))
+                && (!string.IsNullOrEmpty(JToken.Parse(turnContext.Activity.Value.ToString()).SelectToken("Action").ToString())))
             {
                 command = "CardAction";
-            }
-            else if (!string.IsNullOrEmpty(JToken.Parse(turnContext.Activity.Value.ToString()).SelectToken("Activity").ToString()))
-            {
-                command = "UpdateActivity";
             }
 
             switch (command.ToUpperInvariant())
             {
                 case BotCommands.Help:
                     break;
-                case "UPDATEACTIVITY":
-                    var activityToUpdate = JsonConvert.DeserializeObject<TeamsAdaptiveSubmitActionData>(turnContext.Activity.Value.ToString());
-                    var workNote = string.Format("{0}: {1}", turnContext.Activity.From.Name, activityToUpdate.Activity);
-                    var updateIncident = new Incident
-                    {
-                        Id = activityToUpdate.IncidentId,
-                        WorkNotes = workNote,
-                    };
-                    await this.serviceNowProvider.UpdateIncidentAsync(updateIncident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                    await turnContext.SendActivityAsync($"Incident: {activityToUpdate.IncidentNumber} updated with worknote {activityToUpdate.Activity} by {turnContext.Activity.From.Name}");
-                    break;
 
                 case "CARDACTION":
-                    var values = JsonConvert.DeserializeObject<ChangeTicketStatusPayload>(turnContext.Activity.Value.ToString());
-                    var inc = await this.incidentStorageProvider.GetAsync(values.IncidentNumber, values.IncidentId).ConfigureAwait(false);
-                    var updateObject = new Incident();
-                    updateObject.Id = values.IncidentId;
-                    updateObject.Status = values.Action;
-                    updateObject = await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                    updateObject.BridgeDetails = await this.conferenceBridgesStorageProvider.GetAsync("711752242").ConfigureAwait(false);
-                    var incidentCard = new IncidentCard(updateObject);
-                    var attachment = incidentCard.GetIncidentAttachment();
-                    if (values.Title != "Incident New")
+                    var adaptiveCardSubmitActionData = JsonConvert.DeserializeObject<TeamsAdaptiveSubmitActionData>(turnContext.Activity.Value.ToString());
+
+                    // If it's a activity update action, else it's a status change action.
+                    if (!string.IsNullOrEmpty(adaptiveCardSubmitActionData.Activity))
                     {
-                        attachment = incidentCard.GetIncidentAttachment(null, "Incident close", true);
+                        var activityToUpdate = JsonConvert.DeserializeObject<TeamsAdaptiveSubmitActionData>(turnContext.Activity.Value.ToString());
+                        var workNote = string.Format("{0}: {1}", turnContext.Activity.From.Name, activityToUpdate.Activity);
+                        var updateIncident = new Incident
+                        {
+                            Id = activityToUpdate.IncidentId,
+                            WorkNotes = workNote,
+                        };
+                        await this.serviceNowProvider.UpdateIncidentAsync(updateIncident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        await turnContext.SendActivityAsync($"Incident: {activityToUpdate.IncidentNumber} updated with worknote {activityToUpdate.Activity} by {turnContext.Activity.From.Name}");
+                    }
+                    else
+                    {
+                        var values = JsonConvert.DeserializeObject<ChangeTicketStatusPayload>(turnContext.Activity.Value.ToString());
+                        var incidentDetails = await this.incidentStorageProvider.GetAsync(values.IncidentNumber, values.IncidentId).ConfigureAwait(false);
+                        var updateObject = new Incident
+                        {
+                            Id = values.IncidentId,
+                            Status = values.Action,
+                        };
+                        updateObject = await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        updateObject.BridgeDetails = await this.conferenceBridgesStorageProvider.GetAsync(incidentDetails.BridgeId).ConfigureAwait(false);
+                        var incidentCard = new IncidentCard(updateObject);
+                        var attachment = incidentCard.GetIncidentAttachment();
+                        if (values.Title != "Incident New")
+                        {
+                            attachment = incidentCard.GetIncidentAttachment(null, "Incident close", true);
+                        }
+
+                        var connector = new ConnectorClient(new Uri(incidentDetails.ServiceUrl), this.microsoftAppCredentials);
+                        var updateResponse = await connector.Conversations.UpdateActivityAsync(incidentDetails.PersonalConversationId, incidentDetails.PersonalActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken).ConfigureAwait(false);
+                        var updateResponseTeam = await connector.Conversations.UpdateActivityAsync(incidentDetails.TeamConversationId, incidentDetails.TeamActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken);
                     }
 
-                    //await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(IncidentCard.GetIncidentAttachment(updateObject, "Incident close", false))).ConfigureAwait(false);
-                    var connector = new ConnectorClient(new Uri(inc.ServiceUrl), this.microsoftAppCredentials);
-                    //var updateResponse = await turnContext.UpdateActivityAsync(updateCardActivity1, cancellationToken); //.UpdateActivityAsync(updateCardActivity, cancellationToken).ConfigureAwait(false);
-                    var updateResponse = await connector.Conversations.UpdateActivityAsync(inc.PersonalConversationId, inc.PersonalActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken).ConfigureAwait(false); //.UpdateActivityAsync(updateCardActivity, cancellationToken).ConfigureAwait(false);
-                    var updateResponseTeam = await connector.Conversations.UpdateActivityAsync(inc.TeamConversationId, inc.TeamActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken); //.UpdateActivityAsync(updateCardActivity, cancellationToken).ConfigureAwait(false);
                     break;
 
                 default:
@@ -499,18 +569,15 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         }
 
         /// <summary>
-        /// Send help card containing commands recognized by bot.
+        /// Get the value of the searchText parameter in the messaging extension query.
         /// </summary>
-        /// <param name="turnContext">Context object containing information cached for a single turn of conversation with a user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        //private static async Task ShowHelpCardAsync(ITurnContext<IMessageActivity> turnContext)
-        //{
-        //    var activity = (Activity)turnContext.Activity;
-        //    var reply = activity.CreateReply();
-        //    reply.Attachments = HelpCard.GetHelpAttachments();
-        //    reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-        //    await turnContext.SendActivityAsync(reply).ConfigureAwait(false);
-        //}
+        /// <param name="query">Contains messaging extension query keywords.</param>
+        /// <returns>A value of the searchText parameter.</returns>
+        private string GetSearchQueryString(MessagingExtensionQuery query)
+        {
+            var messageExtensionInputText = query.Parameters.FirstOrDefault(parameter => parameter.Name.Equals(SearchTextParameterName, StringComparison.OrdinalIgnoreCase));
+            return messageExtensionInputText?.Value?.ToString();
+        }
 
         /// <summary>
         /// Send typing indicator to the user.
@@ -550,6 +617,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             {
                 Activity = (Activity)MessageFactory.Attachment(cardToSend),
                 ChannelData = new TeamsChannelData { Channel = new ChannelInfo(teamId) },
+
             };
             var taskCompletionSource = new TaskCompletionSource<ConversationResourceResponse>();
             await ((BotFrameworkAdapter)turnContext.Adapter).CreateConversationAsync(

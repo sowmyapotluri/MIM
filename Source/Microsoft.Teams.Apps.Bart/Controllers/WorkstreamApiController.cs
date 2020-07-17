@@ -13,6 +13,11 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Bot.Builder;
+    using Microsoft.Bot.Connector;
+    using Microsoft.Bot.Connector.Authentication;
+    using Microsoft.Bot.Schema;
+    using Microsoft.Teams.Apps.Bart.Cards;
     using Microsoft.Teams.Apps.Bart.Helpers;
     using Microsoft.Teams.Apps.Bart.Models;
     using Microsoft.Teams.Apps.Bart.Models.Error;
@@ -52,9 +57,24 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
         private readonly IWorkstreamStorageProvider workstreamStorageProvider;
 
         /// <summary>
+        /// Helper class which exposes methods required for incident creation.
+        /// </summary>
+        private readonly IIncidentStorageProvider incidentStorageProvider;
+
+        /// <summary>
+        /// Helper class which exposes methods required for incident creation.
+        /// </summary>
+        private readonly IServiceNowProvider serviceNowProvider;
+
+        /// <summary>
         /// Storage provider to perform fetch operation on UserConfiguration table.
         /// </summary>
         private readonly IUserConfigurationStorageProvider userConfigurationStorageProvider;
+
+        /// <summary>
+        /// App credentials.
+        /// </summary>
+        private readonly MicrosoftAppCredentials microsoftAppCredentials;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WorkstreamApiController"/> class.
@@ -64,12 +84,17 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
 
         /// <param name="userConfigurationStorageProvider">Storage provider to perform fetch operation on UserConfiguration table.</param>
         /// <param name="workstreamStorageProvider">Helper class which exposes methods required for workstream creation.</param>
-        public WorkstreamApiController(TelemetryClient telemetryClient, ITokenHelper tokenHelper, IUserConfigurationStorageProvider userConfigurationStorageProvider, IWorkstreamStorageProvider workstreamStorageProvider)
+        public WorkstreamApiController(TelemetryClient telemetryClient, ITokenHelper tokenHelper, IUserConfigurationStorageProvider userConfigurationStorageProvider, 
+            IWorkstreamStorageProvider workstreamStorageProvider, IIncidentStorageProvider incidentStorageProvider, MicrosoftAppCredentials microsoftAppCredentials,
+            IServiceNowProvider serviceNowProvider)
         {
             this.telemetryClient = telemetryClient;
             this.tokenHelper = tokenHelper;
             this.userConfigurationStorageProvider = userConfigurationStorageProvider;
             this.workstreamStorageProvider = workstreamStorageProvider;
+            this.incidentStorageProvider = incidentStorageProvider;
+            this.microsoftAppCredentials = microsoftAppCredentials;
+            this.serviceNowProvider = serviceNowProvider;
         }
 
         /// <summary>
@@ -91,19 +116,28 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                     this.telemetryClient.TrackTrace($"Azure Active Directory access token for user {claims.UserObjectIdentifer} is empty.");
                     return this.StatusCode(
                         StatusCodes.Status401Unauthorized,
-                        new Error
+                        new Models.Error.Error
                         {
                             StatusCode = SignInErrorCode,
                             ErrorMessage = "Azure Active Directory access token for user is found empty.",
                         });
                 }
 
+                var tasks = new List<Task>();
                 if (workstreams.Count > 0)
                 {
+                    var incidentTableData = await this.incidentStorageProvider.GetAsync(workstreams.FirstOrDefault().PartitionKey).ConfigureAwait(false);
+                    Incident incident = await this.serviceNowProvider.GetIncidentAsync(incidentTableData.RowKey, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    incident.BridgeDetails = new ConferenceRoomEntity
+                    {
+                        Code = incidentTableData.BridgeId,
+                        BridgeURL = incidentTableData.BridgeLink,
+                    };
                     foreach (var workstream in workstreams)
                     {
                         if (workstream.InActive)
                         {
+                            workstream.ETag = "*";
                             await this.workstreamStorageProvider.DeleteAsync(workstream).ConfigureAwait(false);
                         }
                         else
@@ -112,13 +146,26 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                             {
                                 if (string.IsNullOrEmpty(workstream.Id))
                                 {
-                                    workstream.Id = Guid.NewGuid().ToString();
+                                    workstreams.Remove(workstream);
+                                }
+
+                                var user = await this.userConfigurationStorageProvider.GetAsync(workstream.AssignedToId).ConfigureAwait(false);
+                                if (user != null)
+                                {
+                                    MicrosoftAppCredentials.TrustServiceUrl(incidentTableData.ServiceUrl);
+                                    var connector = new ConnectorClient(new Uri(incidentTableData.ServiceUrl), this.microsoftAppCredentials);
+                                    var card = new IncidentCard(incident).GetIncidentAttachment();
+
+                                    // Sending cards to team and personal chat
+                                    tasks.Add(connector.Conversations.SendToConversationAsync(user.ConversationId, (Activity)MessageFactory.Attachment(card)));
                                 }
 
                                 await this.workstreamStorageProvider.AddAsync(workstream).ConfigureAwait(false);
                             }
                         }
                     }
+
+                    await Task.WhenAll(tasks).ConfigureAwait(false);
                 }
 
                 this.telemetryClient.TrackEvent($"Workstreams entered into database - Incident Number: {workstreams.FirstOrDefault().PartitionKey} && workstream count= {workstreams.Count}");
@@ -151,7 +198,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                     this.telemetryClient.TrackTrace($"Azure Active Directory access token for user {claims.UserObjectIdentifer} is empty.");
                     return this.StatusCode(
                         StatusCodes.Status401Unauthorized,
-                        new Error
+                        new Models.Error.Error
                         {
                             StatusCode = SignInErrorCode,
                             ErrorMessage = "Azure Active Directory access token for user is found empty.",

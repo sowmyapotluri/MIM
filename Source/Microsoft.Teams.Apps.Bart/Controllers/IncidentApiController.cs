@@ -128,13 +128,13 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         Description = incidentCreated.Description,
                         ShortDescription = incidentCreated.Short_Description,
                         BridgeId = incident.BridgeDetails.Code,
-                        BridgeLink = incident.BridgeDetails.BridgeURL,
+                        BridgeLink = incident.BridgeDetails.Code == "0" ? string.Empty :incident.BridgeDetails.BridgeURL,
                         Status = incidentCreated.Status,
                         Priority = incidentCreated.Priority,
                         Scope = incident.Scope,
                     };
                     await this.incidentStorageProvider.AddAsync(incidentTableEntry).ConfigureAwait(false);
-                    //if (string.IsNullOrEmpty(incident.Id))
+                    //if (string.IsNullOrEmpty(incident.Id) && incident.Bridge == "0")
                     //{
                     //    bridgeStatus.Available = false;
                     //    await this.conferenceBridgesStorageProvider.AddAsync(bridgeStatus).ConfigureAwait(false);

@@ -357,4 +357,8 @@
     <value>Edit workstream</value>
     <comment>Subtitle for task module to edit workstreams</comment>
   </data>
+  <data name="CreateIncident" xml:space="preserve">
+    <value>Create Incident</value>
+    <comment>Create incident task module subtitle</comment>
+  </data>
 </root>

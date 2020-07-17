@@ -25,5 +25,12 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// <param name="userObjectIdentifer">Active Directory object Id of user.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         Task<UserConfigurationEntity> GetAsync(string userObjectIdentifer);
+
+        /// <summary>
+        /// Get user configuration.
+        /// </summary>
+        /// <param name="userConfiguration">User configuration entity.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        Task<bool> DeleteAsync(UserConfigurationEntity userConfiguration);
     }
 }

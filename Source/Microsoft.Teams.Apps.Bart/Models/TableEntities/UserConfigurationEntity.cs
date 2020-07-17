@@ -29,13 +29,13 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         }
 
         /// <summary>
-        /// Gets or sets selected IANA time zone by user.
+        /// Gets or sets conversation id for the user.
         /// </summary>
-        public string IanaTimezone { get; set; }
+        public string ConversationId { get; set; }
 
         /// <summary>
         /// Gets or sets windows time zone converted from IANA.
         /// </summary>
-        public string WindowsTimezone { get; set; }
+        //public string WindowsTimezone { get; set; }
     }
 }

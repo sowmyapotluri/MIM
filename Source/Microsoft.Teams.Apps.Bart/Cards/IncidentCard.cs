@@ -7,6 +7,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
     using System;
     using System.Collections.Generic;
     using AdaptiveCards;
+    using Microsoft.AspNetCore.Mvc.Formatters.Internal;
     using Microsoft.Bot.Schema;
     using Microsoft.Bot.Schema.Teams;
     using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -40,12 +41,53 @@ namespace Microsoft.Teams.Apps.Bart.Cards
         /// <returns>Adaptive card attachment for bot introduction and bot commands to start with.</returns>
         public Attachment GetIncidentAttachment(IncidentEntity incidentEntity = null, string title = "New Incident reported", bool footer = false)
         {
-            
             this.IncidentEntity = incidentEntity;
 
             var footerContainer = new AdaptiveContainer();
-            if (footer)
+            var activityColumnSet = new AdaptiveColumnSet
             {
+                Columns = new List<AdaptiveColumn>
+                        {
+                            new AdaptiveColumn
+                            {
+                                Width = "stretch",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextInput
+                                    {
+                                        Id = "Activity",
+                                        Placeholder = "Type current activity",
+                                    },
+                                },
+                            },
+                            new AdaptiveColumn
+                            {
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveActionSet
+                                    {
+                                        Id = "Activity",
+                                        Actions = new List<AdaptiveAction>
+                                        {
+                                            new AdaptiveSubmitAction
+                                            {
+                                                Title = "Update",
+                                                Data = new TeamsAdaptiveSubmitActionData
+                                                {
+                                                    IncidentId = incident.Id,
+                                                    IncidentNumber = incident.Number,
+                                                    Text = "UpdateActivity",
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+            };
+            if (footer || this.incident.Status != "1")
+            {
+                string footerMessage = this.incident.Status == "2" ? "suspended" : "service restored";
                 footerContainer = new AdaptiveContainer
                 {
                     Style = AdaptiveContainerStyle.Attention,
@@ -53,10 +95,13 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     {
                         new AdaptiveTextBlock
                         {
-                            Text = "* Please do not respond to this incident, as it is" + incident.Status == "2" ? "suspended" : "service restored",
+                            Text = $"* Please do not respond to this incident, as it is {footerMessage}",
+                            Wrap = true,
                         },
                     },
                 };
+
+                activityColumnSet = new AdaptiveColumnSet();
             }
 
             AdaptiveCard card = new AdaptiveCard("1.2")
@@ -96,7 +141,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                                Size = AdaptiveTextSize.Medium,
                                                Color = incident.Priority == "7" ? AdaptiveTextColor.Attention: AdaptiveTextColor.Default,
                                                HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                               Text = incident.Priority == "7" ? "High Priority!" : "Priority",
+                                               Text = incident.Priority == "7" ? "High Priority!" : " ",
                                            },
                                        },
                                    },
@@ -142,53 +187,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     {
                         Facts = BuildFactSet(incident, true),
                     },
-                    new AdaptiveColumnSet
-                    {
-                        Columns = new List<AdaptiveColumn>
-                        {
-                            new AdaptiveColumn
-                            {
-                                Width = "stretch",
-                                Items = new List<AdaptiveElement>
-                                {
-                                    new AdaptiveTextInput
-                                    {
-                                        Id = "Activity",
-                                        Placeholder = "Type current activity",
-                                    },
-                                },
-                            },
-                            new AdaptiveColumn
-                            {
-                                Items = new List<AdaptiveElement>
-                                {
-                                    new AdaptiveActionSet
-                                    {
-                                        Id = "Activity",
-                                        Actions = new List<AdaptiveAction>
-                                        {
-                                            new AdaptiveSubmitAction
-                                            {
-                                                Title = "Update",
-                                                Data = new TeamsAdaptiveSubmitActionData
-                                                {
-                                                    //MsTeams = new CardAction
-                                                    //{
-                                                    //    Type = ActionTypes.MessageBack,
-                                                    //    DisplayText = "Update",
-                                                    //    Text = "UpdateActivity",
-                                                    //},
-                                                    IncidentId = incident.Id,
-                                                    IncidentNumber = incident.Number,
-                                                    Text = "UpdateActivity",
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
+                    activityColumnSet,
                     new AdaptiveFactSet
                     {
                         Facts = BuildFactSet(incident, false),
@@ -225,8 +224,26 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                         {
                             Body = new List<AdaptiveElement>
                             {
-                                GetAdaptiveChoiceSetTitleInput(),
-                                GetAdaptiveChoiceSetStatusInput(this.incident),
+                                new AdaptiveColumnSet
+                                {
+                                    Columns = new List<AdaptiveColumn>
+                                    {
+                                        new AdaptiveColumn
+                                        {
+                                           Items = new List<AdaptiveElement>
+                                           {
+                                                GetAdaptiveChoiceSetTitleInput(),
+                                           },
+                                        },
+                                        new AdaptiveColumn
+                                        {
+                                           Items = new List<AdaptiveElement>
+                                           {
+                                                GetAdaptiveChoiceSetStatusInput(this.incident),
+                                           },
+                                        },
+                                    },
+                                },
                             },
                             Actions = new List<AdaptiveAction>
                             {
@@ -256,11 +273,11 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     Title = "Created On",
                     Value = incident.CreatedOn,
                 });
-                factList.Add(new AdaptiveFact
-                {
-                    Title = "Scope",
-                    Value = incident.CreatedOn,
-                });
+                //factList.Add(new AdaptiveFact
+                //{
+                //    Title = "Scope",
+                //    Value = incident.CreatedOn,
+                //});
                 factList.Add(new AdaptiveFact
                 {
                     Title = "Description",
@@ -274,7 +291,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     Title = "Short Description",
                     Value = incident.Short_Description,
                 });
-                if (incident.BridgeDetails.Code != null)
+                if (incident.BridgeDetails.Code != null && incident.BridgeDetails.Code != "0")
                 {
                     factList.Add(new AdaptiveFact
                     {
@@ -353,6 +370,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
 
             return choiceSet;
         }
+
         public static Attachment TestCard(string contents)
         {
             AdaptiveCard card = new AdaptiveCard("1.2")

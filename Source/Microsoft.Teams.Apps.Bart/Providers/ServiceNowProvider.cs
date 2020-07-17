@@ -35,32 +35,32 @@
         /// <summary>
         /// Search incidents URL.
         /// </summary>
-        private readonly string searchIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}&sysparm_display_value=true&sysparm_limit=10";
+        private readonly string searchIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}&sysparm_display_value=true&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
 
         /// <summary>
         /// Get all incidents URL.
         /// </summary>
-        private readonly string allIncidents = "/api/now/table/incident?sysparm_display_value=true&sysparm_limit=10";
+        private readonly string allIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}%5Esys_created_by%3DSVC_teams_automation&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
 
         /// <summary>
         /// Get new incidents URL.
         /// </summary>
-        private readonly string newIncidents = "/api/now/table/incident?sysparm_query=state%3D1&sysparm_limit=10";
+        private readonly string newIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}%5Estate%3D1%5Esys_created_by%3DSVC_teams_automation&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
 
         /// <summary>
         /// Get suspended incidents URL.
         /// </summary>
-        private readonly string suspendedIncidents = "/api/now/table/incident?sysparm_query=state%3D2&sysparm_limit=10";
+        private readonly string suspendedIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}%5Estate%3D2%5Esys_created_by%3DSVC_teams_automation&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
 
         /// <summary>
         /// Get service restored incidents URL.
         /// </summary>
-        private readonly string serviceRestoredIncidents = "/api/now/table/incident?sysparm_query=state%3D3&sysparm_limit=10";
+        private readonly string serviceRestoredIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}%5Estate%3D3%5Esys_created_by%3DSVC_teams_automation&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
 
         /// <summary>
         /// Get recent incidents URL.
         /// </summary>
-        private readonly string recentIncidents = "/api/now/table/incident?sysparm_query=ORDERBYDESCsys_created_on&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
+        private readonly string recentIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}%5EORDERBYDESCsys_created_on%5Esys_created_by%3DSVC_teams_automation&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
 
         /// <summary>
         /// API helper service for making post and get calls to Graph.
@@ -140,6 +140,33 @@
         }
 
         /// <summary>
+        /// Get incident.
+        /// </summary>
+        /// <param name="incidentId">Incident id. </param>
+        /// <param name="token">Active Directory access token.</param>
+        /// <returns>Event response object.</returns>
+        public async Task<dynamic> GetIncidentAsync(string incidentId, string token)
+        {
+            var httpResponseMessage = await this.apiHelper.GetAsync(string.Format(this.updateIncident, incidentId), token).ConfigureAwait(false);
+            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return JsonConvert.DeserializeObject<ServiceNowResponse>(content).Incident;
+            }
+
+            var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(content);
+
+            this.telemetryClient.TrackTrace($"Update incident API failure- url: {this.updateIncident}, response-code: {errorResponse.Error.StatusCode}, response-content: {errorResponse.Error.ErrorMessage}, request-id: {errorResponse.Error.InnerError.RequestId}", SeverityLevel.Warning);
+            var failureResponse = new
+            {
+                StatusCode = httpResponseMessage.StatusCode,
+                ErrorResponse = errorResponse,
+            };
+            return failureResponse;
+        }
+
+        /// <summary>
         /// Search users in service now.
         /// </summary>
         /// <param name="searchText">Search query from the user. </param>
@@ -199,22 +226,22 @@
         /// <param name="commandId">Query for searching. </param>
         /// <param name="token">Active Directory access token.</param>
         /// <returns>Event response object.</returns>
-        public async Task<dynamic> GetIncidentAsync(string commandId, string token)
+        public async Task<dynamic> GetIncidentAsync(string commandId, string searchQuery, string token)
         {
-            string url = this.recentIncidents;
+            string url = string.Format(this.recentIncidents, searchQuery);
             switch (commandId)
             {
                 case "newincidents":
-                    url = this.newIncidents;
+                    url = string.Format(this.newIncidents, searchQuery);
                     break;
                 case "suspendedincidents":
-                    url = this.suspendedIncidents;
+                    url = string.Format(this.suspendedIncidents, searchQuery);
                     break;
                 case "servicerestoredincidents":
-                    url = this.serviceRestoredIncidents;
+                    url = string.Format(this.serviceRestoredIncidents, searchQuery);
                     break;
                 case "allincidents":
-                    url = this.allIncidents;
+                    url = string.Format(this.allIncidents, searchQuery);
                     break;
             }
 

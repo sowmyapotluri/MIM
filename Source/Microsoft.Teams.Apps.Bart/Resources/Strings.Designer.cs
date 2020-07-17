@@ -169,6 +169,15 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create Incident.
+        /// </summary>
+        public static string CreateIncident {
+            get {
+                return ResourceManager.GetString("CreateIncident", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} at {1} ({2} mins).
         /// </summary>
         public static string DateFormat {

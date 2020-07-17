@@ -1,12 +1,13 @@
 import * as React from 'react';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
-import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, TextArea, Grid } from '@fluentui/react';
+import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, CheckboxProps } from '@fluentui/react';
 import { DatePicker, DayOfWeek, IDatePickerStrings } from 'office-ui-fabric-react/lib/DatePicker';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { Guid } from "guid-typescript";
 import { mergeStyleSets } from 'office-ui-fabric-react/lib/Styling';
 import { AxiosResponse } from "axios";
-// import "./CreateIncident.scss";
+import "./EditWorkstream.scss";
 import { isNullOrUndefined } from 'util';
 import { ApplicationInsights, SeverityLevel } from '@microsoft/applicationinsights-web';
 import { ReactPlugin, withAITracking } from '@microsoft/applicationinsights-react-js';
@@ -18,22 +19,26 @@ const browserHistory = createBrowserHistory({ basename: '' });
 
 export interface IWorkstreamState {
     id: string,
-    shortDescription: string,
-    description: string,
-    notes: string,
     isToggled: boolean,
     loader: boolean,
     status: string,
     workstreams: IWorkstream[],
     allBridges: IConferenceRooms[],
-    selectedBridge: IConferenceRooms
+    selectedBridge: IConferenceRooms,
+    users: IUser[],
+}
+
+export interface IUser {
+    id: string,
+    displayName: string,
+    userPrincipalName: string
 }
 
 export interface IWorkstream {
     priority: number,
     description: string,
     assignedTo: string,
-    completed: boolean,
+    status: boolean,
     assignedToId: string,
     inActive: boolean,
     id: string,
@@ -72,8 +77,19 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
 
     token?: string | null = null;
     telemetry: any = undefined;
-    incidentNumber?: string | null = null
+    incidentNumber?: string | null = null;
     // appInsights: ApplicationInsights;
+    workstream: IWorkstream = {
+        priority: 1,
+        description: "",
+        assignedTo: "",
+        status: false,
+        assignedToId: "",
+        inActive: false,
+        id: Guid.create().toString(),
+        partitionKey: this.incidentNumber!
+    }
+
 
     constructor(props: {}) {
         super(props);
@@ -82,32 +98,20 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         startDate.setHours(8, 30, 0, 0);
         let endDate: Date = new Date();
         endDate.setHours(9, 0, 0, 0);
-        let workstream: IWorkstream = {
-            priority: 1,
-            description: "",
-            assignedTo: "",
-            completed: false,
-            assignedToId: "",
-            inActive: false,
-            id: "",
-            partitionKey: ""
-        }
         this.state = {
             id: "",
-            shortDescription: "",
-            description: "",
-            notes: "",
             loader: false,
             status: "New",
             isToggled: false,
-            workstreams: [workstream],
+            workstreams: [this.workstream],
             allBridges: [],
             selectedBridge: {
                 available: true,
                 channelId: "",
                 code: 0,
                 bridgeURL: ""
-            }
+            },
+            users: []
         }
         let search = window.location.search;
         let params = new URLSearchParams(search);
@@ -184,7 +188,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                         id: response[i].Id,
                         assignedTo: response[i].AssignedTo,
                         assignedToId: response[i].AssignedToId,
-                        completed: response[i].Completed,
+                        status: response[i].Status,
                         description: response[i].Description,
                         inActive: response[i].InActive,
                         partitionKey: response[i].PartitionKey,
@@ -192,8 +196,10 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     }
                     allWorkstreams.push(workstream);
                 }
+                this.workstream.priority = allWorkstreams.length + 1;
+                this.workstream.partitionKey = this.incidentNumber!
                 this.setState({
-                    workstreams: allWorkstreams,
+                    workstreams: [...orderBy(allWorkstreams, [items => items.priority]), this.workstream],
                     loader: false
                 }, () => { console.log("LOG", this.state.workstreams) });
                 // });
@@ -210,12 +216,12 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         let workstream: IWorkstream = {
             priority: this.state.workstreams.length + 1,
             description: "",
-            assignedTo: "12345",
-            completed: false,
-            assignedToId: "123456",
+            assignedTo: "",
+            status: false,
+            assignedToId: "",
             inActive: false,
-            id: "",
-            partitionKey: ""
+            id: Guid.create().toString(),
+            partitionKey: this.incidentNumber!
         }
         this.setState({
             workstreams: [...this.state.workstreams, workstream],
@@ -234,6 +240,78 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         this.setState({
             workstreams: workstreams
         })
+    }
+
+    private getUsers = (e: React.SyntheticEvent<HTMLElement, Event>, data?: DropdownProps) => {
+        var searchQuery = data!.searchQuery!
+        this.searchUsers(searchQuery).then((res: any) => {
+        });
+    }
+
+    private searchUsers = async (searchQuery: string) => {
+        await fetch("/api/ResourcesApi/GetUsersAsync?fromFlag=1&searchQuery=" + searchQuery, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + this.token
+            },
+        }).then(async (res) => {
+            if (res.status === 401) {
+                const response = await res.json();
+                if (response) {
+                    // this.setState({
+                    //     errorResponseDetail: {
+                    //         errorMessage: response.message,
+                    //         statusCode: response.code,
+                    //     }
+                    // })
+                }
+
+                // this.setState({ authorized: false });
+                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+            }
+            else if (res.status === 200) {
+                let response = await res.json();
+                this.setState({
+                    loader: false,
+                    users: response
+                });
+                // let values: IUser[] = response.map((users: IUser)=>{
+                //     let user: IUser = {
+                //         displayName: users.displayName,
+                //         id: users.id,
+                //         userPrincipalName: users.userPrincipalName
+                //     }
+                // })
+                // for (let i =0; i < response.length; i++){
+                //     let user: IUser = {
+                //         displayName: response[i].displayName,
+                //         id: response[i].id,
+                //         userPrincipalName: response[i].userPrincipalName
+                //     }
+                //     values.push(user);
+                // }
+            }
+            else {
+                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
+                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+            }
+
+        });
+    }
+
+    private userAssigned = (e: React.SyntheticEvent<HTMLElement, Event>, v?: DropdownProps) => {
+        let index = v! as { id: number }
+        let selectedUser = v!.value! as { header: string, content: string };
+        console.log("Users chanegs", selectedUser, index.id)
+        var workstream = this.state.workstreams;
+        workstream[index.id].assignedTo = selectedUser.header;
+        workstream[index.id].assignedToId = this.state.users.find((user) => user.userPrincipalName === selectedUser.content)!.id!;
+
+        this.setState({
+            workstreams: workstream
+        });
+
     }
 
     private onWorkstreamAssigneeChange = (e: React.SyntheticEvent<HTMLElement, Event>, index: number) => {
@@ -267,10 +345,16 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
     }
 
     private onDropItems = (e: React.DragEvent<HTMLDivElement>, droppedOrder: number, droppedItemId: string) => {
+        console.log("drop-droppedOrder", droppedOrder, droppedItemId)
+
         let draggedItemId: string = e.dataTransfer.getData("Id");
 
         let draggedItem = this.state.workstreams.filter(x => x.id === draggedItemId)[0];
         let droppedItem = this.state.workstreams.filter(x => x.id === droppedItemId)[0];
+        if (droppedItem.description === ""){
+            e.preventDefault();
+            return;
+        }
 
         let draggedIndex = this.state.workstreams.findIndex(x => x.id === draggedItemId)
         let droppedIndex = this.state.workstreams.findIndex(x => x.id === droppedItemId);
@@ -334,6 +418,81 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         });
     }
 
+    private completedCheckboxChanged = (e: React.SyntheticEvent<HTMLElement, Event>, v?: CheckboxProps) => {
+        const selectedId = (e.currentTarget as Element).id;
+        this.state.workstreams.forEach((currentItem) => {
+            if (currentItem.id === selectedId) {
+                currentItem.status = v!.checked ? v!.checked : false;
+            }
+        });
+        this.setState({
+            workstreams: this.state.workstreams
+        });
+    }
+
+    private removeWorkstream = (workstreamId: string) => {
+        let allWorkstrems = this.state.workstreams;
+        allWorkstrems.forEach((currentWorkstream) => {
+            if (currentWorkstream.id === workstreamId) {
+                currentWorkstream.inActive = true;
+                allWorkstrems = allWorkstrems.map((workstream) => {
+                    if (workstream.priority > currentWorkstream.priority) {
+                        workstream.priority--;
+                        return workstream;
+                    } else {
+                        return workstream;
+                    }
+                })
+            }
+        });
+        this.setState({
+            workstreams: allWorkstrems
+        });
+    }
+
+    private submitWorkstreams = async () => {
+        this.setState({
+            loader: true
+        })
+        await fetch("/api/WorkstreamApi/CreateOrUpdateWorkstremAsync", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + this.token
+            },
+            body: JSON.stringify(this.state.workstreams)
+        }).then(async (res) => {
+            if (res.status === 401) {
+                const response = await res.json();
+                if (response) {
+                    // this.setState({
+                    //     errorResponseDetail: {
+                    //         errorMessage: response.message,
+                    //         statusCode: response.code,
+                    //     }
+                    // })
+                }
+
+                // this.setState({ authorized: false });
+                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+                return response;
+            }
+            else if (res.status === 200) {
+                // let response = await res.json();
+                // this.setState({
+                //     // loader: false
+                // }, () => {
+                microsoftTeams.tasks.submitTask({ "output": "success" });
+                // });
+            }
+            else {
+                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
+                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+            }
+
+        });
+    }
+
     public render(): JSX.Element {
         const inputItems = [
             'New',
@@ -341,46 +500,68 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
             'Service Restored'
         ];
 
-        let workstreamBlock: JSX.Element[] = (this.state.workstreams.map((workstream: IWorkstream, index: number) => {
-            console.log("Refresh!", workstream)
-            let items = this.state.workstreams.map(item => item.priority)
-            let description = <Text key={"description" + index} content={workstream.description} />
-            if (workstream.description === ""){
-                description = <Input className="inputField" defaultValue={workstream.assignedTo} value={workstream.assignedTo} key={"assignedto" + index} placeholder="Assigned to" fluid name="assignedto" onChange={(e) => this.onWorkstreamAssigneeChange(e, index)} />
-            }
-            return (
-                <div draggable onDragOver={this.onDragOverItems} onDragStart={(e) => this.onDragStartItems(e, workstream.id)} onDrop={(e) => this.onDropItems(e, index, workstream.id)}>
-                    <Flex gap="gap.small">
-                        {/* <Dropdown
-                            items={items}
-                            defaultValue={items[index]}
-                            value={items[index]}
-                            placeholder="Start typing a name"
-                            noResultsMessage="We couldn't find any matches."
-                            onSelectedChange={this.setPriority}
-                            key={"number" + index}
-                        /> */}
-                        <Text key={"number" + index} content={workstream.priority} />
+        const userDetails = this.state.users.map((user) => {
+            console.log("UserDetails", user)
+            return ({
+                header: user.displayName,
+                content: user.userPrincipalName
+            });
+        });
 
-                        {description}
-                        <Text key={"assignedTo" + index} content={workstream.assignedTo} />
-                        <Checkbox key={"completed" + index} label="Completed" checked={workstream.completed}/>
-                        <Dropdown
-                            search
-                            items={inputItems}
-                            placeholder="Type Text"
-                            noResultsMessage="We couldn't find any matches."
-                        />
-                    </Flex>
-                    <div hidden={index !== this.state.workstreams.length - 1}>
-                        <Flex gap="gap.smaller">
-                            <Icon iconName="add" className="pos-rel ft-18 ft-bld icon-sm" />
-                            <Button text content="Add another workstream" onClick={this.addWorkstreams} />
-                        </Flex>
-                    </div>
-                    <br />
-                </div>
-            )
+        let workstreamBlock = (this.state.workstreams.map((workstream: IWorkstream, index: number) => {
+            if (!workstream.inActive) {
+                console.log("Refresh!", workstream)
+                let description = <Text key={"description" + index} content={workstream.description} />
+                let assignedTo = <Text key={"assignedTo" + index} content={workstream.assignedTo} />
+
+                if (workstream.description === "" || this.state.workstreams.length - 1 === index) {
+                    description = <Input className="inputField" defaultValue={workstream.description} value={workstream.description} key={"assignedto" + index} placeholder="Description" fluid name="assignedto" onChange={(e) => this.onWorkstreamDescriptionChange(e, index)} />
+                }
+
+                if (workstream.assignedTo === "" || this.state.workstreams.length - 1 === index) {
+                    assignedTo = <Dropdown
+                        search
+                        clearable
+                        id={index.toString()}
+                        items={userDetails}
+                        defaultValue={workstream.assignedTo}
+                        value={workstream.assignedTo}
+                        placeholder="Assign to"
+                        onSearchQueryChange={this.getUsers}
+                        noResultsMessage="We couldn't find any matches."
+                        onSelectedChange={this.userAssigned}
+                        key={"number" + index}
+                    />
+                }
+
+                return (
+                    <tr draggable = {workstream.description !== ""} onDragOver={this.onDragOverItems} onDragStart={(e) => this.onDragStartItems(e, workstream.id)} onDrop={(e) => this.onDropItems(e, index + 1, workstream.id)}>
+                        <td>
+                            <Text key={"number" + index} content={workstream.priority} />
+                        </td>
+                        <td>
+                            {description}
+                        </td>
+                        <td>
+                            {assignedTo}
+                        </td>
+                        <td>
+                            <Checkbox key={"completed" + index} id={workstream.id} label="Completed" checked={workstream.status} onClick={this.completedCheckboxChanged} />
+                        </td>
+                        <td>
+                            <Button className="close-btn" content={<Icon iconName="trash" className="deleteIcon" />} iconOnly title="Close"
+                                onClick={() => this.removeWorkstream(workstream.id)} />
+                        </td>
+
+                        {/* <div hidden={index !== this.state.workstreams.length - 1}>
+                            <Flex gap="gap.smaller">
+                                <Icon iconName="add" className="addIcon" />
+                                <Button text content="Add another workstream" onClick={this.addWorkstreams} />
+                            </Flex>
+                        </div> */}
+                    </tr>
+                )
+            }
         }));
 
         if (this.state.loader) {
@@ -391,17 +572,47 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
             );
         }
         else {
+            console.log("workstreamBlock", workstreamBlock)
             return (
                 <div className="taskModule">
-                    <div className="formContainer">
-                        <Grid>
-                            {workstreamBlock}
-                        </Grid>
+                    <div className="formContainer ">
+
+                        <Dropdown
+                            search
+                            items={inputItems}
+                            placeholder="Type Text"
+                            noResultsMessage="We couldn't find any matches."
+                        />
+                        <h4>Here are few workstreams</h4>
+                        <table className="table table-borderless">
+                            <thead>
+                                <tr>
+                                    <th>Priority</th>
+                                    <th>Description</th>
+                                    <th>Assigned to</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {workstreamBlock}
+                            </tbody>
+                        </table>
+                        {/* <div hidden={index !== this.state.workstreams.length - 1}> */}
+                        <Flex gap="gap.smaller">
+                            <Icon iconName="add" className="addIcon" />
+                            <Button text content="Add another workstream" onClick={this.addWorkstreams}
+                                disabled={this.state.workstreams[this.state.workstreams.length - 1].description === ""
+                                    && this.state.workstreams[this.state.workstreams.length - 1].assignedTo === ""} />
+                        </Flex>
+                        {/* </div> */}
                     </div>
                     <div className="footerContainer">
                         <div className="buttonContainer">
                             <Flex gap="gap.small">
-                                <Button content="Submit" primary className="bottomButton" />
+                                <FlexItem push>
+                                    <Button content="Submit" primary className="bottomButton" onClick={this.submitWorkstreams} />
+                                </FlexItem>
                             </Flex>
                         </div>
                     </div>

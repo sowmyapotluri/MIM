@@ -18,6 +18,7 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
     using Microsoft.Teams.Apps.Bart.Providers.Interfaces;
     using Microsoft.Teams.Apps.Bart.Providers.Storage;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Class that handles the search activities for messaging extension.
@@ -78,38 +79,33 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
 
             List<Incident> searchServiceResults = new List<Incident>();
             List<IncidentEntity> searchResults = new List<IncidentEntity>();
-
+            query = string.IsNullOrEmpty(query) ? string.Empty : query;
             // commandId should be equal to Id mentioned in Manifest file under composeExtensions section.
             switch (commandId)
             {
                 case RecentCommandId:
-                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(RecentCommandId, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                    //searchResults = await incidentStorageProvider.GetIncidentsAsync(RecentCommandId).ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(RecentCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
                     composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case NewCommandId:
-                    //searchServiceResults = await serviceNowProvider.GetIncidentAsync(NewCommandId, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                    //searchResults = await incidentStorageProvider.GetIncidentsAsync(RecentCommandId).ConfigureAwait(false);
-                    //composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchResults, incidentStorageProvider).ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(NewCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case SuspendedCommandId:
-                    //searchServiceResults = await serviceNowProvider.GetIncidentAsync(SuspendedCommandId, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                    //searchResults = await incidentStorageProvider.GetIncidentsAsync(RecentCommandId).ConfigureAwait(false);
-                    //composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchResults, incidentStorageProvider).ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(SuspendedCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case ServiceRestoredCommandId:
-                    //searchServiceResults = await serviceNowProvider.GetIncidentAsync(ServiceRestoredCommandId, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                    //searchResults = await incidentStorageProvider.GetIncidentsAsync(RecentCommandId).ConfigureAwait(false);
-                    //composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchResults, incidentStorageProvider).ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(ServiceRestoredCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case AllCommandId:
-                    //searchServiceResults = await serviceNowProvider.GetIncidentAsync(AllCommandId, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                    //searchResults = await incidentStorageProvider.GetIncidentsAsync(RecentCommandId).ConfigureAwait(false);
-                    //composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchResults, incidentStorageProvider).ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(AllCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
             }
 
@@ -138,29 +134,30 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
                 Attachments = new List<MessagingExtensionAttachment>(),
             };
 
-            foreach (var ticket in searchServiceResults)
+            foreach (var incident in searchServiceResults)
             {
-                var incidentDetails = await incidentStorageProvider.GetAsync(ticket.Number, ticket.Id).ConfigureAwait(false);
-                ticket.BridgeDetails = new Models.TableEntities.ConferenceRoomEntity();
+                var incidentDetails = await incidentStorageProvider.GetAsync(incident.Number, incident.Id).ConfigureAwait(false);
                 if (incidentDetails != null)
                 {
+                    incident.BridgeDetails = new ConferenceRoomEntity { Code = incidentDetails.BridgeId, BridgeURL = incidentDetails.BridgeLink };
+
                     ThumbnailCard previewCard = new ThumbnailCard
                     {
-                        Title = ticket.Id,
-                        Text = GetPreviewCardText(ticket, commandId, localTimestamp),
+                        Title = incident.Number,
+                        Text = GetPreviewCardText(incident, commandId, localTimestamp),
                     };
-                    //var incident = new Incident
+                    //var incidentObject = new Incident
                     //{
                     //    BridgeDetails = new ConferenceRoomEntity
                     //    {
-                    //        BridgeURL = ticket.BridgeLink,
-                    //        Code = ticket.BridgeId
+                    //        BridgeURL = incident.BridgeLink,
+                    //        Code = incident.BridgeId,
                     //    },
-                    //    Description = ticket.Description,
-                    //    Short_Description = ticket.ShortDescription,
-                    //    CreatedOn = ticket.Timestamp.ToString(),
+                    //    Description = incident.Description,
+                    //    Short_Description = incident.ShortDescription,
+                    //    CreatedOn = incident.Timestamp.ToString(),
                     //};
-                    var selectedTicketAdaptiveCard = new MessagingExtenstionCard(incidentDetails, ticket);
+                    var selectedTicketAdaptiveCard = new MessagingExtenstionCard(incidentDetails, incident);
                     composeExtensionResult.Attachments.Add(selectedTicketAdaptiveCard.GetIncidentAttachment(incidentDetails).ToMessagingExtensionAttachment(previewCard.ToAttachment()));
                 }
             }
@@ -180,8 +177,7 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
             //var ticketStatus = commandId != OpenCommandId ? $"<div style='white-space:nowrap'>{HttpUtility.HtmlEncode(Cards.CardHelper.GetTicketDisplayStatusForSme(ticket))}</div>" : string.Empty;
             var cardText = $@"<div>
                                 <div style='white-space:nowrap'>
-                                        {HttpUtility.HtmlEncode(ticket.Id)}
-                                        | {ticket.Description} 
+                                        {HttpUtility.HtmlEncode(ticket.Short_Description)}
                                 </div> 
                          </div>";
             //HttpUtility.HtmlEncode(CardHelper.GetFormattedDateInUserTimeZone(ticket.DateCreated, localTimestamp))

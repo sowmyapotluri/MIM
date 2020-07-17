@@ -1,5 +1,5 @@
-﻿// <copyright file="ChangeTicketStatusPayload.cs" company="Microsoft">
-// Copyright (c) Microsoft. All rights reserved.
+﻿// <copyright file="ChangeTicketStatusPayload.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
 namespace Microsoft.Teams.Apps.Bart.Models

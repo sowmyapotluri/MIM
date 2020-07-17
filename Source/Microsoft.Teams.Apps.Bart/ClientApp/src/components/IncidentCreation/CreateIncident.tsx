@@ -23,7 +23,7 @@ export interface ICreateIncidentState {
     id: string,
     shortDescription: string,
     description: string,
-    notes: string,
+    scope: string,
     isToggled: boolean,
     loader: boolean,
     status: string,
@@ -78,16 +78,15 @@ const todayDate: Date = new Date();
 
 export default class CreateIncident extends React.Component<ICreateIncidentProps, ICreateIncidentState> {
 
-    private readonly newSessionStatus = "New";
-    private readonly type = "Session";
     private shortDescription = "";
     private description = "";
-    private notes = "";
+    private scope = "";
     private status = "";
     private priority = 0;
     private list: number[] = [];
     token?: string | null = null;
     telemetry: any = undefined;
+    fetchedDescription: string | null = null;
     // appInsights: ApplicationInsights;
 
     constructor(props: ICreateIncidentProps) {
@@ -97,6 +96,11 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         startDate.setHours(8, 30, 0, 0);
         let endDate: Date = new Date();
         endDate.setHours(9, 0, 0, 0);
+        let search = window.location.search;
+        let params = new URLSearchParams(search);
+        this.telemetry = params.get("telemetry");
+        this.token = params.get("token");
+        this.fetchedDescription = params.get("description");
         let workstream: IWorkstream = {
             priority: 1,
             description: "",
@@ -108,8 +112,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         this.state = {
             id: "",
             shortDescription: "",
-            description: "",
-            notes: "",
+            description: this.fetchedDescription !== null ? this.fetchedDescription : "",
+            scope: "",
             loader: false,
             status: "New",
             isToggled: false,
@@ -124,15 +128,11 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             users: []
         }
         this.shortDescription = "";
-        this.description = "";
-        this.notes = "";
+        this.description = this.fetchedDescription !== null ? this.fetchedDescription : "";
+        this.scope = "";
         this.status = "";
         this.priority = 0;
         this.list = [1];
-        let search = window.location.search;
-        let params = new URLSearchParams(search);
-        this.telemetry = params.get("telemetry");
-        this.token = params.get("token");
         // this.appInsights = new ApplicationInsights({
         //     config: {
         //         instrumentationKey: this.telemetry,
@@ -199,7 +199,10 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 }
                 this.setState({
                     loader: false,
-                    allBridges: bridges
+                    allBridges: bridges,
+                    selectedBridge: bridges.find((bridge)=> bridge.code.toString() === "0")!
+                },()=>{
+                    console.log("=>", this.state.allBridges)
                 });
             }
             else {
@@ -226,8 +229,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         this.description = (e.target as HTMLInputElement).value;
     }
 
-    private onNotesChange = (e: React.SyntheticEvent<HTMLElement, Event>) => {
-        this.notes = (e.target as HTMLInputElement).value;
+    private onScopeChange = (e: React.SyntheticEvent<HTMLElement, Event>) => {
+        this.scope = (e.target as HTMLInputElement).value;
     }
 
     private onPriorityChange = (e: React.SyntheticEvent<HTMLElement, Event>, dropdownProps?: DropdownProps) => {
@@ -325,6 +328,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     }
 
     private createIncident = async () => {
+        console.log("CreateIncident",this.description);
         this.setState({
             loader: true
         });
@@ -334,7 +338,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 Description: this.description,
                 Priority: 7,
                 Bridge: this.state.selectedBridge.code,
-                bridgeDetails: this.state.selectedBridge
+                bridgeDetails: this.state.selectedBridge,
+                Scope: this.scope
             },
             Workstreams: this.state.workstreams
         };
@@ -467,8 +472,6 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                 items={items}
                                 defaultValue={items[index]}
                                 value={items[index]}
-                                placeholder="Start typing a name"
-                                noResultsMessage="We couldn't find any matches."
                                 onSelectedChange={this.setPriority}
                                 key={"number" + index}
                             />
@@ -514,7 +517,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             )
         }));
 
-        let bridgeCodes = this.state.allBridges.map(bridge => bridge.code);
+        let bridgeCodes = this.state.allBridges.map(bridge => { if (bridge.code.toString() !== "0") return bridge.code });
         console.log("bridgeCodes", bridgeCodes)
         if (this.state.loader) {
             return (
@@ -546,15 +549,15 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         <Text content="Short description(Note: max 250 characters)" />
                                     </Flex>
                                     <Flex gap="gap.smaller">
-                                        <Input fluid className="inputField" defaultValue={this.shortDescription} placeholder="Search title goes here" name="shortDescriptionTitle" onChange={this.onShortDescriptionChange} />
+                                        <Input fluid className="inputField" defaultValue={this.shortDescription} placeholder="Short description" name="shortDescriptionTitle" onChange={this.onShortDescriptionChange} />
                                     </Flex>
                                 </div>
                                 <div className="col-md-4">
                                     <Flex gap="gap.smaller">
-                                        <Text content="Notes" />
+                                        <Text content="Scope" />
                                     </Flex>
                                     <Flex gap="gap.smaller">
-                                        <Input fluid className="inputField" defaultValue={this.notes} placeholder="Search title goes here" name="notesTitle" onChange={this.onNotesChange} />
+                                        <Input fluid className="inputField" defaultValue={this.scope} placeholder="Scope" name="scopeTitle" onChange={this.onScopeChange} />
 
                                     </Flex>
                                 </div>
@@ -563,7 +566,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                 <div className="col-md-8">
                                     <Flex gap="gap.smaller" column>
                                         <Text content="Description of the reported problem" />
-                                        <TextArea fluid className="inputField textarea" defaultValue={this.description} placeholder="Search title goes here" name="descriptionTitle" onChange={this.onDescriptionChange} />
+                                        <TextArea fluid className="inputField textarea" defaultValue={this.description} placeholder="Description" name="descriptionTitle" onChange={this.onDescriptionChange} />
                                     </Flex>
                                 </div>
                                 <div className="col-md-4">
@@ -573,7 +576,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         <Dropdown
                                             className="select-wrapper"
                                             items={bridgeCodes}
-                                            placeholder="Type Text"
+                                            placeholder="Select conference bridges"
                                             noResultsMessage="We couldn't find any matches."
                                             onSelectedChange={this.setBridge}
                                         />
@@ -583,7 +586,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         <Dropdown
                                             className="select-wrapper"
                                             items={Object.keys(Priority)}
-                                            placeholder="Type Text"
+                                            placeholder="Select priority"
                                             noResultsMessage="We couldn't find any matches."
                                             onSelectedChange={this.onPriorityChange}
                                         />

@@ -33,5 +33,12 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// <param name="condition">Condition for searching.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         Task<List<IncidentEntity>> GetIncidentsAsync(string condition);
+
+        /// <summary>
+        /// Get user configuration.
+        /// </summary>
+        /// <param name="partitionKey">Active Directory object Id of user.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        Task<IncidentEntity> GetAsync(string partitionKey);
     }
 }

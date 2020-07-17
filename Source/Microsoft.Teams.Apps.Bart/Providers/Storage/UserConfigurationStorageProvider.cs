@@ -96,6 +96,27 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
+        /// Delete user configuration.
+        /// </summary>
+        /// <param name="userConfiguration">User configuration entity.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        public async Task<bool> DeleteAsync(UserConfigurationEntity userConfiguration)
+        {
+            try
+            {
+                await this.EnsureInitializedAsync().ConfigureAwait(false);
+                TableOperation insertOrMergeOperation = TableOperation.Delete(userConfiguration);
+                TableResult result = await this.cloudTable.ExecuteAsync(insertOrMergeOperation).ConfigureAwait(false);
+                return result.Result != null;
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Ensure table storage connection is initialized.
         /// </summary>
         /// <returns>A task that represents the work queued to execute.</returns>

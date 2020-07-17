@@ -28,45 +28,45 @@ namespace Microsoft.Teams.Apps.Bart.Cards
             {
                 Body = new List<AdaptiveElement>
                 {
-                    new AdaptiveColumnSet
-                    {
-                        Columns = new List<AdaptiveColumn>
-                        {
+                    //new AdaptiveColumnSet
+                    //{
+                    //    Columns = new List<AdaptiveColumn>
+                    //    {
 
-                            new AdaptiveColumn
-                            {
-                                Width = AdaptiveColumnWidth.Auto,
-                                Items = new List<AdaptiveElement>
-                                {
-                                    new AdaptiveTextBlock
-                                    {
-                                        Size = AdaptiveTextSize.Large,
-                                        Wrap = true,
-                                        Text = Strings.WelcomeCardTitle,
-                                        Weight = AdaptiveTextWeight.Bolder,
-                                    },
-                                    new AdaptiveTextBlock
-                                    {
-                                        Size = AdaptiveTextSize.Default,
-                                        Wrap = true,
-                                        Text = Strings.WelcomeCardContent,
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    new AdaptiveTextBlock
-                    {
-                        HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
-                        Text = Strings.WelcomeCardContentPart1,
-                        Wrap = true,
-                    },
-                    new AdaptiveTextBlock
-                    {
-                        HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
-                        Text = Strings.WelcomeCardContentPart2,
-                        Wrap = true,
-                    },
+                    //        new AdaptiveColumn
+                    //        {
+                    //            Width = AdaptiveColumnWidth.Auto,
+                    //            Items = new List<AdaptiveElement>
+                    //            {
+                    //                //new AdaptiveTextBlock
+                                    //{
+                                    //    Size = AdaptiveTextSize.Large,
+                                    //    Wrap = true,
+                                    //    Text = Strings.WelcomeCardTitle,
+                                    //    Weight = AdaptiveTextWeight.Bolder,
+                                    //},
+                                    //new AdaptiveTextBlock
+                                    //{
+                                    //    Size = AdaptiveTextSize.Default,
+                                    //    Wrap = true,
+                                    //    Text = Strings.WelcomeCardContent,
+                                    //},
+                    //            },
+                    //        },
+                    //    },
+                    //},
+                    //new AdaptiveTextBlock
+                    //{
+                    //    HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
+                    //    Text = Strings.WelcomeCardContentPart1,
+                    //    Wrap = true,
+                    //},
+                    //new AdaptiveTextBlock
+                    //{
+                    //    HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
+                    //    Text = Strings.WelcomeCardContentPart2,
+                    //    Wrap = true,
+                    //},
                 },
                 Actions = new List<AdaptiveAction>
                 {

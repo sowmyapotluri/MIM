@@ -6,6 +6,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
@@ -67,6 +68,29 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
                 var retrieveOperation = TableOperation.Retrieve<IncidentEntity>(partitionKey, rowKey);
                 var result = await this.cloudTable.ExecuteAsync(retrieveOperation).ConfigureAwait(false);
                 return (IncidentEntity)result?.Result;
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get user configuration.
+        /// </summary>
+        /// <param name="partitionKey">Active Directory object Id of user.</param>
+        /// <returns>A task that represents the work queued to execute.</returns>
+        public async Task<IncidentEntity> GetAsync(string partitionKey)
+        {
+            try
+            {
+                await this.EnsureInitializedAsync().ConfigureAwait(false);
+                var condition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partitionKey);
+                var query = new TableQuery<IncidentEntity>().Where(condition);
+                TableContinuationToken continuationToken = null;
+                var queryResult = await this.cloudTable.ExecuteQuerySegmentedAsync(query, continuationToken).ConfigureAwait(false);
+                return queryResult?.Results.FirstOrDefault();
             }
             catch (Exception ex)
             {
