@@ -26,6 +26,8 @@ export interface IWorkstreamState {
     allBridges: IConferenceRooms[],
     selectedBridge: IConferenceRooms,
     users: IUser[],
+    incidentAssignees: IUser[],
+    incidentAssignedTo: IUser,
 }
 
 export interface IUser {
@@ -42,7 +44,8 @@ export interface IWorkstream {
     assignedToId: string,
     inActive: boolean,
     id: string,
-    partitionKey: string
+    partitionKey: string,
+    new: boolean,
 }
 
 export interface IConferenceRooms {
@@ -78,6 +81,8 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
     token?: string | null = null;
     telemetry: any = undefined;
     incidentNumber?: string | null = null;
+    incidentId?: string | null = null;
+    assignedToChanged?: boolean = false;
     // appInsights: ApplicationInsights;
     workstream: IWorkstream = {
         priority: 1,
@@ -87,7 +92,8 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         assignedToId: "",
         inActive: false,
         id: Guid.create().toString(),
-        partitionKey: this.incidentNumber!
+        partitionKey: this.incidentNumber!,
+        new: true
     }
 
 
@@ -111,13 +117,20 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                 code: 0,
                 bridgeURL: ""
             },
-            users: []
+            users: [],
+            incidentAssignees: [],
+            incidentAssignedTo: {
+                displayName: "null",
+                id: "null",
+                userPrincipalName: "null",
+            }
         }
         let search = window.location.search;
         let params = new URLSearchParams(search);
         this.telemetry = params.get("telemetry");
         this.token = params.get("token");
         this.incidentNumber = params.get("incident");
+        this.incidentId = params.get("id");
         // this.appInsights = new ApplicationInsights({
         //     config: {
         //         instrumentationKey: this.telemetry,
@@ -137,6 +150,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
             console.log("microsoft teams", context)
         });
         document.removeEventListener("keydown", this.escFunction, false);
+        this.getAssignees();
         this.getWorkstreams();
     }
 
@@ -150,38 +164,29 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         }
     }
 
-
     private getWorkstreams = async () => {
         this.setState({
             loader: true
         });
-        await fetch("/api/WorkstreamApi/GetAllWorkstremsAsync?incidentNumber=" + this.incidentNumber, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + this.token
-            },
-        }).then(async (res) => {
-            if (res.status === 401) {
-                const response = await res.json();
-                if (response) {
-                    // this.setState({
-                    //     errorResponseDetail: {
-                    //         errorMessage: response.message,
-                    //         statusCode: response.code,
-                    //     }
-                    // })
-                }
 
-                // this.setState({ authorized: false });
-                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
-                return response;
-            }
-            else if (res.status === 200) {
-                let response = await res.json();
-                // this.setState({
-                //     loader: false
-                // }, () => {
+        await Promise.all([
+            fetch("/api/WorkstreamApi/GetAllWorkstremsAsync?incidentNumber=" + this.incidentNumber, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + this.token
+                },
+            }),
+            fetch("/api/IncidentApi/AssignedUser?incidentNumber=" + this.incidentNumber, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + this.token
+                },
+            })
+        ]).then(async (res) => {
+            if (res[0].status === 200) {
+                let response = await res[0].json();
                 let allWorkstreams: IWorkstream[] = [];
                 for (let i = 0; i < response.length; i++) {
                     let workstream: IWorkstream = {
@@ -193,6 +198,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                         inActive: response[i].InActive,
                         partitionKey: response[i].PartitionKey,
                         priority: response[i].Priority,
+                        new: response[i].New
                     }
                     allWorkstreams.push(workstream);
                 }
@@ -203,12 +209,15 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     loader: false
                 }, () => { console.log("LOG", this.state.workstreams) });
                 // });
-            }
-            else {
-                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+
             }
 
+            if (res[1].status === 200) {
+                let response: IUser = await res[1].json();
+                this.setState({
+                    incidentAssignedTo: response
+                })
+            }
         });
     }
 
@@ -221,7 +230,8 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
             assignedToId: "",
             inActive: false,
             id: Guid.create().toString(),
-            partitionKey: this.incidentNumber!
+            partitionKey: this.incidentNumber!,
+            new: true
         }
         this.setState({
             workstreams: [...this.state.workstreams, workstream],
@@ -300,6 +310,43 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         });
     }
 
+    private getAssignees = async () => {
+        await fetch("/api/ResourcesApi/GetUsersAsync?fromFlag=0", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + this.token
+            },
+        }).then(async (res) => {
+            if (res.status === 401) {
+                const response = await res.json();
+                if (response) {
+                    // this.setState({
+                    //     errorResponseDetail: {
+                    //         errorMessage: response.message,
+                    //         statusCode: response.code,
+                    //     }
+                    // })
+                }
+
+                // this.setState({ authorized: false });
+                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+            }
+            else if (res.status === 200) {
+                let response = await res.json();
+                this.setState({
+                    loader: false,
+                    incidentAssignees: response
+                });
+            }
+            else {
+                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
+                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+            }
+
+        });
+    }
+
     private userAssigned = (e: React.SyntheticEvent<HTMLElement, Event>, v?: DropdownProps) => {
         let index = v! as { id: number }
         let selectedUser = v!.value! as { header: string, content: string };
@@ -314,26 +361,30 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
 
     }
 
+    private assigneeChanged = (e: React.SyntheticEvent<HTMLElement, Event>, v?: DropdownProps) => {
+        let currentUser = this.state.incidentAssignedTo;
+        let selectedUser = v!.value! as { header: string, content: string };
+        if (currentUser.id !== this.state.incidentAssignees.find((user) => user.userPrincipalName === selectedUser.content)!.id!) {
+            var user: IUser = {
+                displayName: selectedUser.header,
+                id: this.state.incidentAssignees.find((user) => user.userPrincipalName === selectedUser.content)!.id!,
+                userPrincipalName: ""
+            };
+            console.log("Assign chanegs", selectedUser, currentUser)
+
+            this.setState({
+                incidentAssignedTo: user
+            });
+            this.assignedToChanged = true;
+        }
+    }
+
     private onWorkstreamAssigneeChange = (e: React.SyntheticEvent<HTMLElement, Event>, index: number) => {
         let workstreams = this.state.workstreams;
         workstreams[index].assignedTo = (e.target as HTMLInputElement).value;
         this.setState({
             workstreams: workstreams
         })
-    }
-
-    private setPriority = (e: React.SyntheticEvent<HTMLElement, Event>, dropdownProps?: DropdownProps) => {
-        let workstreamSection = this.state.workstreams;
-        let currentIndex: number = (Number)(dropdownProps!.defaultValue!);
-        let newIndex: number = (Number)(dropdownProps!.value!);
-        console.log("Priority", currentIndex, newIndex)
-        workstreamSection[currentIndex - 1].priority = newIndex;
-        workstreamSection[newIndex - 1].priority = currentIndex;
-        workstreamSection.sort((a, b) => (a.priority > b.priority) ? 1 : ((b.priority > a.priority) ? -1 : 0));
-        console.log(workstreamSection)
-        this.setState({
-            workstreams: workstreamSection
-        });
     }
 
     private onDragOverItems = (e: React.DragEvent<HTMLDivElement>) => {
@@ -351,7 +402,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
 
         let draggedItem = this.state.workstreams.filter(x => x.id === draggedItemId)[0];
         let droppedItem = this.state.workstreams.filter(x => x.id === droppedItemId)[0];
-        if (droppedItem.description === ""){
+        if (droppedItem.description === "") {
             e.preventDefault();
             return;
         }
@@ -454,42 +505,46 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         this.setState({
             loader: true
         })
-        await fetch("/api/WorkstreamApi/CreateOrUpdateWorkstremAsync", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + this.token
-            },
-            body: JSON.stringify(this.state.workstreams)
-        }).then(async (res) => {
-            if (res.status === 401) {
-                const response = await res.json();
-                if (response) {
-                    // this.setState({
-                    //     errorResponseDetail: {
-                    //         errorMessage: response.message,
-                    //         statusCode: response.code,
-                    //     }
-                    // })
-                }
 
-                // this.setState({ authorized: false });
-                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
-                return response;
-            }
-            else if (res.status === 200) {
-                // let response = await res.json();
-                // this.setState({
-                //     // loader: false
-                // }, () => {
-                microsoftTeams.tasks.submitTask({ "output": "success" });
-                // });
-            }
-            else {
-                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+        let assignedToObject = {
+            AssignedTo: this.state.incidentAssignedTo.displayName,
+            AssignedToId: this.state.incidentAssignedTo.id,
+            PartitionKey: this.incidentNumber,
+            RowKey: this.incidentId
+        }
+
+        let requests = [
+            fetch("/api/WorkstreamApi/CreateOrUpdateWorkstremAsync", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + this.token
+                },
+                body: JSON.stringify(this.state.workstreams)
+            })
+        ];
+        if (this.assignedToChanged) {
+            requests.push(
+                fetch("/api/IncidentApi/AssignTicket", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + this.token
+                    },
+                    body: JSON.stringify(assignedToObject)
+                })
+            )
+        }
+        await Promise.all(requests).then(async (res) => {
+
+            let assignedToObject = {
+                assignedToId: this.state.incidentAssignedTo.id,
+                assignedTo: this.state.incidentAssignedTo.displayName,
+                incidentNumber: this.incidentNumber,
+                output: this.assignedToChanged
             }
 
+            microsoftTeams.tasks.submitTask(assignedToObject);
         });
     }
 
@@ -502,6 +557,14 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
 
         const userDetails = this.state.users.map((user) => {
             console.log("UserDetails", user)
+            return ({
+                header: user.displayName,
+                content: user.userPrincipalName
+            });
+        });
+
+        const incidentAssignees = this.state.incidentAssignees.map((user) => {
+            console.log("incidentAssignees", user)
             return ({
                 header: user.displayName,
                 content: user.userPrincipalName
@@ -535,7 +598,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                 }
 
                 return (
-                    <tr draggable = {workstream.description !== ""} onDragOver={this.onDragOverItems} onDragStart={(e) => this.onDragStartItems(e, workstream.id)} onDrop={(e) => this.onDropItems(e, index + 1, workstream.id)}>
+                    <tr draggable={workstream.description !== ""} onDragOver={this.onDragOverItems} onDragStart={(e) => this.onDragStartItems(e, workstream.id)} onDrop={(e) => this.onDropItems(e, index + 1, workstream.id)}>
                         <td>
                             <Text key={"number" + index} content={workstream.priority} />
                         </td>
@@ -578,10 +641,13 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     <div className="formContainer ">
 
                         <Dropdown
-                            search
-                            items={inputItems}
-                            placeholder="Type Text"
+
+                            items={incidentAssignees}
+                            placeholder="Assign Incident"
                             noResultsMessage="We couldn't find any matches."
+                            onSelectedChange={this.assigneeChanged}
+                            defaultValue={isNullOrUndefined(this.state.incidentAssignedTo.id) ? "" :
+                                this.state.incidentAssignedTo.displayName}
                         />
                         <h4>Here are few workstreams</h4>
                         <table className="table table-borderless">

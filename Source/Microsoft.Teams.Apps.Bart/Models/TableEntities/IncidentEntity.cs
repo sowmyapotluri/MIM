@@ -68,5 +68,25 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
 
         public string BridgeLink { get; set; }
 
+        /// <summary>
+        /// Gets or sets requested by display name.
+        /// </summary>
+        public string RequestedBy { get; set; }
+
+        /// <summary>
+        /// Gets or sets requested by id.
+        /// </summary>
+        public string RequestedById { get; set; }
+
+        /// <summary>
+        /// Gets or sets requested for display name.
+        /// </summary>
+        public string RequestedFor { get; set; }
+
+        /// <summary>
+        /// Gets or sets requested for id.
+        /// </summary>
+        public string RequestedForId { get; set; }
+
     }
 }

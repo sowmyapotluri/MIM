@@ -123,7 +123,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         });
                 }
 
-                var tasks = new List<Task>();
+                var sentWorkstreamNotificationTask = new List<Task>();
                 if (workstreams.Count > 0)
                 {
                     var incidentTableData = await this.incidentStorageProvider.GetAsync(workstreams.FirstOrDefault().PartitionKey).ConfigureAwait(false);
@@ -149,23 +149,27 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                                     workstreams.Remove(workstream);
                                 }
 
-                                var user = await this.userConfigurationStorageProvider.GetAsync(workstream.AssignedToId).ConfigureAwait(false);
-                                if (user != null)
+                                if (workstream.New)
                                 {
-                                    MicrosoftAppCredentials.TrustServiceUrl(incidentTableData.ServiceUrl);
-                                    var connector = new ConnectorClient(new Uri(incidentTableData.ServiceUrl), this.microsoftAppCredentials);
-                                    var card = new IncidentCard(incident).GetIncidentAttachment();
+                                    var user = await this.userConfigurationStorageProvider.GetAsync(workstream.AssignedToId).ConfigureAwait(false);
+                                    if (user != null)
+                                    {
+                                        MicrosoftAppCredentials.TrustServiceUrl(incidentTableData.ServiceUrl);
+                                        var connector = new ConnectorClient(new Uri(incidentTableData.ServiceUrl), this.microsoftAppCredentials);
+                                        var card = new IncidentCard(incident).GetIncidentAttachment();
 
-                                    // Sending cards to team and personal chat
-                                    tasks.Add(connector.Conversations.SendToConversationAsync(user.ConversationId, (Activity)MessageFactory.Attachment(card)));
+                                        // Sending cards to team and personal chat
+                                        sentWorkstreamNotificationTask.Add(connector.Conversations.SendToConversationAsync(user.ConversationId, (Activity)MessageFactory.Attachment(card)));
+                                    }
                                 }
 
+                                workstream.New = false;
                                 await this.workstreamStorageProvider.AddAsync(workstream).ConfigureAwait(false);
                             }
                         }
                     }
 
-                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                    await Task.WhenAll(sentWorkstreamNotificationTask).ConfigureAwait(false);
                 }
 
                 this.telemetryClient.TrackEvent($"Workstreams entered into database - Incident Number: {workstreams.FirstOrDefault().PartitionKey} && workstream count= {workstreams.Count}");

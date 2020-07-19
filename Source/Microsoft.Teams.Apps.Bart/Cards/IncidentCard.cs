@@ -214,7 +214,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                         Title = "View workstream",
                         Data = new AdaptiveSubmitActionData
                         {
-                            Msteams = new TaskModuleAction(Strings.OtherRooms, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.EditWorkstream, ActivityReferenceId = this.incident.Number }) }),
+                            Msteams = new TaskModuleAction(Strings.OtherRooms, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.EditWorkstream, ActivityReferenceId = this.incident.Id, ActivityReferenceNumber = this.incident.Number }) }),
                         },
                     },
                     new AdaptiveShowCardAction

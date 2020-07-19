@@ -56,5 +56,7 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         public string AssignedToId { get; set; }
 
         public bool InActive { get; set; }
+
+        public bool New { get; set; }
     }
 }

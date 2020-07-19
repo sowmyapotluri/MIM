@@ -58,6 +58,8 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
 
         private readonly string graphApiToSearchUsers = "/v1.0/users?$filter=startswith(displayName,'{0}')&$select=displayName,userPrincipalName,id";
 
+        private readonly string graphApiToGetIncidemntManagers = "/v1.0/groups/{0}/members?$select=displayName,userPrincipalName,id";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourcesApiController"/> class.
         /// </summary>
@@ -156,13 +158,13 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         });
                 }
 
-                string url = "";
+                string url = string.Format(this.graphApiToGetIncidemntManagers, "b423a73a-e033-4c91-9bd8-8f45a14a56da");
                 if (fromFlag == 1)
                 {
-                    url = this.graphApiToSearchUsers;
+                    url = string.Format(this.graphApiToSearchUsers, searchQuery);
                 }
 
-                var result = await this.graphApiHelper.GetAsync(string.Format(url, searchQuery), token).ConfigureAwait(false);
+                var result = await this.graphApiHelper.GetAsync(url, token).ConfigureAwait(false);
                 var responseMessage = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(responseMessage))
                 {

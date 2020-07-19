@@ -28,5 +28,17 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// </summary>
         [JsonProperty("displayName")]
         public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Guid in teams user id.
+        /// </summary>
+        [JsonProperty("teamsUserId")]
+        public string TeamsUserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the service url.
+        /// </summary>
+        [JsonProperty("serviceUrl")]
+        public string ServiceUrl { get; set; }
     }
 }

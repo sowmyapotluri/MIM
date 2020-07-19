@@ -13,6 +13,8 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Bot.Connector;
+    using Microsoft.Teams.Apps.Bart.Cards;
     using Microsoft.Teams.Apps.Bart.Helpers;
     using Microsoft.Teams.Apps.Bart.Models;
     using Microsoft.Teams.Apps.Bart.Models.Error;
@@ -125,13 +127,12 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                     {
                         PartitionKey = incidentCreated.Number,
                         RowKey = incidentCreated.Id,
-                        Description = incidentCreated.Description,
-                        ShortDescription = incidentCreated.Short_Description,
                         BridgeId = incident.BridgeDetails.Code,
-                        BridgeLink = incident.BridgeDetails.Code == "0" ? string.Empty :incident.BridgeDetails.BridgeURL,
-                        Status = incidentCreated.Status,
-                        Priority = incidentCreated.Priority,
-                        Scope = incident.Scope,
+                        BridgeLink = incident.BridgeDetails.Code == "0" ? string.Empty : incident.BridgeDetails.BridgeURL,
+                        RequestedBy = incident.RequestedBy,
+                        RequestedById = incident.RequestedById,
+                        RequestedFor = incident.RequestedFor,
+                        RequestedForId = incident.RequestedForId,
                     };
                     await this.incidentStorageProvider.AddAsync(incidentTableEntry).ConfigureAwait(false);
                     //if (string.IsNullOrEmpty(incident.Id) && incident.Bridge == "0")
@@ -153,6 +154,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                                 workstreamEntity.AssignedToId = workstream.AssignedToId;
                                 workstreamEntity.Priority = workstream.Priority;
                                 workstreamEntity.Status = workstream.Status;
+                                workstreamEntity.New = workstream.New;
 
                                 workstreamString.Add($"{workstreamEntity.Priority}: {workstream.Description}: {workstream.AssignedTo}: {workstream.Status}");
                                 incidentCreated.WorkNotes = string.Join(',', workstreamString);
@@ -160,7 +162,6 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                                 await this.workstreamStorageProvider.AddAsync(workstreamEntity).ConfigureAwait(false);
                             }
                         }
-
                     }
 
                     return this.Ok(incidentCreated);
@@ -173,6 +174,88 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         StatusCode = "Confilt",
                         ErrorMessage = "Bridge not available.",
                     });
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+                return this.StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Get supported time zones for user from Graph API.
+        /// </summary>
+        /// <param name="assignedTo">Incident table entity object.</param>
+        /// <returns>Returns the newly created incident data.</returns>
+        [HttpPost]
+        public async Task<IActionResult> AssignTicket([FromBody] IncidentEntity assignedTo)
+        {
+            try
+            {
+                var claims = this.GetUserClaims();
+                this.telemetryClient.TrackTrace($"User {claims.UserObjectIdentifer} submitted request to get supported time zones.");
+
+                var token = await this.tokenHelper.GetUserTokenAsync(claims.FromId).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(token))
+                {
+                    this.telemetryClient.TrackTrace($"Azure Active Directory access token for user {claims.UserObjectIdentifer} is empty.");
+                    return this.StatusCode(
+                        StatusCodes.Status401Unauthorized,
+                        new Error
+                        {
+                            StatusCode = SignInErrorCode,
+                            ErrorMessage = "Azure Active Directory access token for user is found empty.",
+                        });
+                }
+
+                await this.incidentStorageProvider.AddAsync(assignedTo).ConfigureAwait(false);
+
+                return this.Ok();
+
+            }
+            catch (Exception ex)
+            {
+                this.telemetryClient.TrackException(ex);
+                return this.StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Get supported time zones for user from Graph API.
+        /// </summary>
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <returns>Returns the newly created incident data.</returns>
+        [HttpGet]
+        public async Task<IActionResult> AssignedUser([FromQuery] string incidentNumber)
+        {
+            try
+            {
+                var claims = this.GetUserClaims();
+                this.telemetryClient.TrackTrace($"User {claims.UserObjectIdentifer} submitted request to get supported time zones.");
+
+                var token = await this.tokenHelper.GetUserTokenAsync(claims.FromId).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(token))
+                {
+                    this.telemetryClient.TrackTrace($"Azure Active Directory access token for user {claims.UserObjectIdentifer} is empty.");
+                    return this.StatusCode(
+                        StatusCodes.Status401Unauthorized,
+                        new Error
+                        {
+                            StatusCode = SignInErrorCode,
+                            ErrorMessage = "Azure Active Directory access token for user is found empty.",
+                        });
+                }
+
+                var incident = await this.incidentStorageProvider.GetAsync(incidentNumber).ConfigureAwait(false);
+                User user = new User();
+                if (!string.IsNullOrEmpty(incident.AssignedTo))
+                {
+                    user.DisplayName = incident.AssignedTo;
+                    user.Id = incident.AssignedToId;
+                }
+
+                return this.Ok(user);
+
             }
             catch (Exception ex)
             {

@@ -100,6 +100,41 @@ namespace Microsoft.Teams.Apps.Bart.Models
         [JsonProperty("scope")]
         public string Scope { get; set; }
 
+        ///// <summary>
+        ///// Gets or sets assignedTo display name.
+        ///// </summary>
+        //[JsonProperty("assignedTo")]
+        //public string AssignedTo { get; set; }
+
+        ///// <summary>
+        ///// Gets or sets assignedTo id.
+        ///// </summary>
+        //[JsonProperty("assignedToId")]
+        //public string AssignedToId { get; set; }
+
+        /// <summary>
+        /// Gets or sets requested by display name.
+        /// </summary>
+        [JsonProperty("requestedBy")]
+        public string RequestedBy { get; set; }
+
+        /// <summary>
+        /// Gets or sets requested by id.
+        /// </summary>
+        [JsonProperty("requestedById")]
+        public string RequestedById { get; set; }
+
+        /// <summary>
+        /// Gets or sets requested for display name.
+        /// </summary>
+        [JsonProperty("requestedFor")]
+        public string RequestedFor { get; set; }
+
+        /// <summary>
+        /// Gets or sets requested for id.
+        /// </summary>
+        [JsonProperty("requestedForId")]
+        public string RequestedForId { get; set; }
 
     }
 }

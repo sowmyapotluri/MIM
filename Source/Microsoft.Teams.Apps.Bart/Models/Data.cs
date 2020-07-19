@@ -16,13 +16,18 @@ namespace Microsoft.Teams.Apps.Bart.Models
         public string Text { get; set; }
 
         /// <summary>
-        /// Gets or sets unique GUID to recognize previous activity which needs to be updated.
+        /// Gets or sets unique number to recognize incident.
         /// </summary>
-        public string ActivityReferenceId { get; set; }
+        public string ActivityReferenceNumber { get; set; }
 
         /// <summary>
         /// Gets or sets activity to update.
         /// </summary>
         public string Activity { get; set; }
+
+        /// <summary>
+        /// Gets or sets unique GUID to recognize incident.
+        /// </summary>
+        public string ActivityReferenceId { get; set; }
     }
 }

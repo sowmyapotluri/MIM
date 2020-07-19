@@ -34,6 +34,16 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         public string ConversationId { get; set; }
 
         /// <summary>
+        /// Gets or sets the Guid in teams user id.
+        /// </summary>
+        public string TeamsUserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the service url.
+        /// </summary>
+        public string ServiceUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets windows time zone converted from IANA.
         /// </summary>
         //public string WindowsTimezone { get; set; }

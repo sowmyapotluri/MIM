@@ -131,7 +131,8 @@ namespace Microsoft.Teams.Apps.Bart
                 this.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"],
                 this.Configuration["TenantId"],
                 new MicrosoftAppCredentials(this.Configuration["MicrosoftAppId"], this.Configuration["MicrosoftAppPassword"]),
-                (IConferenceBridgesStorageProvider)provider.GetService(typeof(IConferenceBridgesStorageProvider))));
+                (IConferenceBridgesStorageProvider)provider.GetService(typeof(IConferenceBridgesStorageProvider)),
+                (IWorkstreamStorageProvider)provider.GetService(typeof(IWorkstreamStorageProvider))));
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

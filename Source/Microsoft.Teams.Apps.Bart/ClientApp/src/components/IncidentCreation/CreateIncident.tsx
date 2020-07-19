@@ -39,7 +39,8 @@ export interface IWorkstream {
     assignedTo: string,
     completed: boolean,
     assignedToId: string,
-    inActive: boolean
+    inActive: boolean,
+    new: boolean
 }
 
 export interface IUser {
@@ -87,6 +88,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     token?: string | null = null;
     telemetry: any = undefined;
     fetchedDescription: string | null = null;
+    requestedBy?: IUser | null = null;
+    requestedFor?: IUser | null = null;
     // appInsights: ApplicationInsights;
 
     constructor(props: ICreateIncidentProps) {
@@ -101,6 +104,11 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         this.telemetry = params.get("telemetry");
         this.token = params.get("token");
         this.fetchedDescription = params.get("description");
+        this.requestedBy = {
+            displayName: params.get("displayName")!,
+            id: "",
+            userPrincipalName: ""
+        };
         let workstream: IWorkstream = {
             priority: 1,
             description: "",
@@ -108,6 +116,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             completed: false,
             assignedToId: "",
             inActive: false,
+            new: true
         }
         this.state = {
             id: "",
@@ -149,8 +158,11 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     public componentDidMount = () => {
         microsoftTeams.initialize();
         microsoftTeams.getContext((context) => {
-            console.log("microsoft teams", context)
+            this.requestedBy!.id = context.userObjectId!;
+            this.requestedBy!.userPrincipalName = context.userPrincipalName!;
+            console.log("microsoft teams", context, this.requestedBy!)
         });
+
         document.removeEventListener("keydown", this.escFunction, false);
         this.getAvailableBridges();
     }
@@ -200,8 +212,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 this.setState({
                     loader: false,
                     allBridges: bridges,
-                    selectedBridge: bridges.find((bridge)=> bridge.code.toString() === "0")!
-                },()=>{
+                    selectedBridge: bridges.find((bridge) => bridge.code.toString() === "0")!
+                }, () => {
                     console.log("=>", this.state.allBridges)
                 });
             }
@@ -267,11 +279,25 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         console.log("Users chanegs", selectedUser, index.id)
         var workstream = this.state.workstreams;
         workstream[index.id].assignedTo = selectedUser.header;
-        workstream[index.id].assignedToId = selectedUser.content;
+        workstream[index.id].assignedToId = this.state.users.find((user) => user.userPrincipalName === selectedUser.content)!.id!;;
 
         this.setState({
             workstreams: workstream
         });
+
+    }
+
+    private requestedAssigned = (e: React.SyntheticEvent<HTMLElement, Event>, v?: DropdownProps) => {
+        let selectedUser = v!.value! as { header: string, content: string };
+        let index = v! as { id: number }
+        console.log("Users chanegs", selectedUser, index.id)
+        if (selectedUser.content !== this.requestedBy!.userPrincipalName) {
+            this.requestedFor = {
+                id: this.state.users.find((user) => user.userPrincipalName === selectedUser.content)!.id!,
+                displayName: selectedUser.header,
+                userPrincipalName: selectedUser.content
+            }
+        }
 
     }
 
@@ -328,7 +354,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     }
 
     private createIncident = async () => {
-        console.log("CreateIncident",this.description);
+        console.log("CreateIncident", this.description);
         this.setState({
             loader: true
         });
@@ -392,7 +418,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             assignedTo: "",
             completed: false,
             assignedToId: "",
-            inActive: false
+            inActive: false,
+            new: true
         }
         this.setState({
             workstreams: [...this.state.workstreams, workstream],
@@ -540,7 +567,17 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                         <div className="custom">
                             <div className="row">
                                 <div className="col-md-4 col-lg-4">
-                                    <Input className="inputField" fluid value={this.state.id} name="txtPasskey" />
+                                    <Dropdown
+                                        className="md-input"
+                                        clearable
+                                        search
+                                        id="requestedBy"
+                                        onSearchQueryChange={this.getUsers}
+                                        items={userInput}
+                                        placeholder="Start typing a name"
+                                        onSelectedChange={this.requestedAssigned}
+                                        defaultValue={this.requestedBy!.displayName}
+                                    />
                                 </div>
                             </div>
                             <div className="row my-3">

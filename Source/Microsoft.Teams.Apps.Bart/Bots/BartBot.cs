@@ -19,6 +19,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
     using Microsoft.Bot.Connector.Authentication;
     using Microsoft.Bot.Schema;
     using Microsoft.Bot.Schema.Teams;
+    using Microsoft.CodeAnalysis.CSharp.Syntax;
     using Microsoft.Teams.Apps.Bart.Cards;
     using Microsoft.Teams.Apps.Bart.Helpers;
     using Microsoft.Teams.Apps.Bart.Models;
@@ -110,6 +111,10 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         /// </summary>
         private readonly IIncidentStorageProvider incidentStorageProvider;
 
+        /// <summary>
+        /// Helper class which exposes methods required for workstream creation.
+        /// </summary>
+        private readonly IWorkstreamStorageProvider workstreamStorageProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BartBot{T}"/> class.
@@ -126,7 +131,13 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         /// <param name="appBaseUri">Application base URL.</param>
         /// <param name="instrumentationKey">Instrumentation key for application insights logging.</param>
         /// <param name="tenantId">Valid tenant id for which bot will operate.</param>
-        public BartBot(ConversationState conversationState, UserState userState, T dialog, ITokenHelper tokenHelper, IActivityStorageProvider activityStorageProvider, IServiceNowProvider serviceNowProvider, TelemetryClient telemetryClient, IUserConfigurationStorageProvider userConfigurationStorageProvider, IIncidentStorageProvider incidentStorageProvider, string appBaseUri, string instrumentationKey, string tenantId, MicrosoftAppCredentials microsoftAppCredentials, IConferenceBridgesStorageProvider conferenceBridgesStorageProvider)
+        /// <param name="microsoftAppCredentials">App credentials.</param>
+        /// <param name="conferenceBridgesStorageProvider">Storage provider to perform insert and update operation on ConferenceBridges table.</param>
+        /// <param name="workstreamStorageProvider">Storage provider to perform insert and update operation on Workstreams table.</param>
+        public BartBot(ConversationState conversationState, UserState userState, T dialog, ITokenHelper tokenHelper, IActivityStorageProvider activityStorageProvider, 
+            IServiceNowProvider serviceNowProvider, TelemetryClient telemetryClient, IUserConfigurationStorageProvider userConfigurationStorageProvider, 
+            IIncidentStorageProvider incidentStorageProvider, string appBaseUri, string instrumentationKey, string tenantId, 
+            MicrosoftAppCredentials microsoftAppCredentials, IConferenceBridgesStorageProvider conferenceBridgesStorageProvider, IWorkstreamStorageProvider workstreamStorageProvider)
         {
             this.conversationState = conversationState;
             this.userState = userState;
@@ -142,6 +153,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             this.microsoftAppCredentials = microsoftAppCredentials;
             this.incidentStorageProvider = incidentStorageProvider;
             this.conferenceBridgesStorageProvider = conferenceBridgesStorageProvider;
+            this.workstreamStorageProvider = workstreamStorageProvider;
         }
 
         /// <summary>
@@ -213,7 +225,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                             Height = "large",
                             Width = "large",
                             Title = Strings.CreateIncident,
-                            Url = string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}&description={3}", this.appBaseUri, this.instrumentationKey, token, description),
+                            Url = string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}&description={3}&displayName={4}", this.appBaseUri, this.instrumentationKey, token, description, turnContext.Activity.From.Name),
 
                         },
                     },
@@ -338,13 +350,13 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                 this.telemetryClient.TrackEvent("Bot installed", new Dictionary<string, string>() { { "User", activity.From.AadObjectId } });
                 var userStateAccessors = this.userState.CreateProperty<UserData>(nameof(UserData));
                 var userdata = await userStateAccessors.GetAsync(turnContext, () => new UserData()).ConfigureAwait(false);
-                await this.userConfigurationStorageProvider.AddAsync(new UserConfigurationEntity { UserAdObjectId = activity.From.AadObjectId, ConversationId = activity.Conversation.Id });
+                //await this.userConfigurationStorageProvider.AddAsync(new UserConfigurationEntity { UserAdObjectId = activity.From.AadObjectId, ConversationId = activity.Conversation.Id, ServiceUrl = activity.ServiceUrl, TeamsUserId = activity.From.Id });
 
                 if (userdata?.IsWelcomeCardSent == null || userdata?.IsWelcomeCardSent == false)
                 {
                     userdata.IsWelcomeCardSent = true;
                     await userStateAccessors.SetAsync(turnContext, userdata).ConfigureAwait(false);
-                    await this.userConfigurationStorageProvider.AddAsync(new UserConfigurationEntity { UserAdObjectId = activity.From.AadObjectId, ConversationId = activity.Conversation.Id });
+                    await this.userConfigurationStorageProvider.AddAsync(new UserConfigurationEntity { UserAdObjectId = activity.From.AadObjectId, ConversationId = activity.Conversation.Id, ServiceUrl = activity.ServiceUrl, TeamsUserId = activity.From.Id });
                     var welcomeCardImageUrl = new Uri(baseUri: new Uri(this.appBaseUri), relativeUri: "/images/welcome.jpg");
                     await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(WelcomeCard.GetWelcomeCardAttachment()), cancellationToken).ConfigureAwait(false);
                 }
@@ -419,19 +431,19 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             var postedValues = JsonConvert.DeserializeObject<Data>(JObject.Parse(taskModuleRequest.Data.ToString()).SelectToken("data").ToString());
             string command = postedValues.Text;
             var token = this.tokenHelper.GenerateAPIAuthToken(activity.From.AadObjectId, activity.ServiceUrl, activity.From.Id, jwtExpiryMinutes: 60);
-            string activityReferenceId = string.Empty;
+            string activityReferenceNumber = string.Empty;
 
             switch (command.ToUpperInvariant())
             {
                 // Show task module to manage favorite rooms which is invoked from 'Favorite rooms' list card.
                 case BotCommands.CreateIncident:
                     this.telemetryClient.TrackTrace("Create incident executed.");
-                    return this.GetTaskModuleResponse(string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}", this.appBaseUri, this.instrumentationKey, token), Strings.CreateIncident, "large", "large");
+                    return this.GetTaskModuleResponse(string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}&displayName={3}", this.appBaseUri, this.instrumentationKey, token, turnContext.Activity.From.Name), Strings.CreateIncident, "large", "large");
 
                 case BotCommands.EditWorkstream:
                     this.telemetryClient.TrackTrace("Edit workstream executed.");
-                    activityReferenceId = postedValues.ActivityReferenceId;
-                    return this.GetTaskModuleResponse(string.Format(CultureInfo.InvariantCulture, "{0}/editWorkstream?telemetry={1}&token={2}&incident={3}", this.appBaseUri, this.instrumentationKey, token, activityReferenceId), Strings.EditWorkstream, "460", "600");
+                    activityReferenceNumber = postedValues.ActivityReferenceNumber;
+                    return this.GetTaskModuleResponse(string.Format(CultureInfo.InvariantCulture, "{0}/editWorkstream?telemetry={1}&token={2}&incident={3}&id={4}", this.appBaseUri, this.instrumentationKey, token, activityReferenceNumber, postedValues.ActivityReferenceId), Strings.EditWorkstream, "460", "600");
 
                 default:
                     var reply = MessageFactory.Text(Strings.CommandNotRecognized.Replace("{command}", command, StringComparison.OrdinalIgnoreCase));
@@ -458,6 +470,39 @@ namespace Microsoft.Teams.Apps.Bart.Bots
 
             if (((JObject)taskModuleRequest.Data).ContainsKey("output"))
             {
+                var parsedObject = JObject.Parse(taskModuleRequest.Data.ToString());
+                if (parsedObject["output"].ToObject<bool>())
+                {
+                    var user = await this.userConfigurationStorageProvider.GetAsync(parsedObject["assignedToId"].ToString()).ConfigureAwait(false);
+                    var incidentEntity = await this.incidentStorageProvider.GetAsync(parsedObject["incidentNumber"].ToString()).ConfigureAwait(false);
+                    string name = parsedObject["assignedTo"].ToString();
+                    var connector = new ConnectorClient(new Uri(incidentEntity.ServiceUrl), this.microsoftAppCredentials);
+                    var activity = new Activity(ActivityTypes.Message)
+                    {
+                        Id = incidentEntity.TeamActivityId,
+                        Conversation = new ConversationAccount { Id = incidentEntity.TeamConversationId },
+                        Text = "<at>" + name + "</at>, you are assigned this incident.",
+                    };
+                    if (user != null)
+                    {
+                        var mentions = new List<Entity>
+                        {
+                            new Mention
+                            {
+                                Text = $"<at>{name}</at>",
+                                Mentioned = new ChannelAccount()
+                                {
+                                    Name = name,
+                                    Id = user.TeamsUserId,
+                                },
+                            },
+                        };
+                        activity.Entities = mentions;
+                    }
+
+                    await connector.Conversations.SendToConversationAsync(activity, cancellationToken);
+                }
+
                 this.telemetryClient.TrackTrace("Taskmodule submitted from EditWorkstream.");
                 return default;
             }
@@ -487,8 +532,31 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                     RowKey = valuesFromTaskModule.Id,
                     PersonalConversationId = turnContext.Activity.Conversation.Id,
                     PersonalActivityId = personalChatActivityId.Id,
+                    ReplyToId = turnContext.Activity.ReplyToId,
                 };
                 await this.incidentStorageProvider.AddAsync(incidentEntity).ConfigureAwait(false);
+                var workstreams = await this.workstreamStorageProvider.GetAllAsync(valuesFromTaskModule.Number).ConfigureAwait(false);
+                var sentWorkstreamNotificationTask = new List<Task>();
+                foreach (var workstream in workstreams)
+                {
+                    if (workstream.New)
+                    {
+                        var user = await this.userConfigurationStorageProvider.GetAsync(workstream.AssignedToId).ConfigureAwait(false);
+                        if (user != null)
+                        {
+                            MicrosoftAppCredentials.TrustServiceUrl(teamCard.ServiceUrl);
+                            var connector = new ConnectorClient(new Uri(teamCard.ServiceUrl), this.microsoftAppCredentials);
+
+                            // Sending cards to team and personal chat
+                            sentWorkstreamNotificationTask.Add(connector.Conversations.SendToConversationAsync(user.ConversationId, (Activity)MessageFactory.Attachment(card)));
+                        }
+                    }
+
+                    workstream.New = false;
+                    await this.workstreamStorageProvider.AddAsync(workstream).ConfigureAwait(false);
+                }
+
+                await Task.WhenAll(sentWorkstreamNotificationTask).ConfigureAwait(false);
             }
             else
             {
@@ -535,7 +603,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                             WorkNotes = workNote,
                         };
                         await this.serviceNowProvider.UpdateIncidentAsync(updateIncident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                        await turnContext.SendActivityAsync($"Incident: {activityToUpdate.IncidentNumber} updated with worknote {activityToUpdate.Activity} by {turnContext.Activity.From.Name}");
+                        await turnContext.SendActivityAsync($"Incident: {activityToUpdate.IncidentNumber} current activity updated {activityToUpdate.Activity} by {turnContext.Activity.From.Name}");
                     }
                     else
                     {
@@ -553,6 +621,12 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                         if (values.Title != "Incident New")
                         {
                             attachment = incidentCard.GetIncidentAttachment(null, "Incident close", true);
+                        }
+
+                        if (values.Action != "1")
+                        {
+                            //    updateObject.BridgeDetails.Available = true;
+                            //    await this.conferenceBridgesStorageProvider.AddAsync(updateObject.BridgeDetails).ConfigureAwait(false);
                         }
 
                         var connector = new ConnectorClient(new Uri(incidentDetails.ServiceUrl), this.microsoftAppCredentials);

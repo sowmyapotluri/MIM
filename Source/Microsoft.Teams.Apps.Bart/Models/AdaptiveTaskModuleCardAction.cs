@@ -31,9 +31,13 @@ namespace Microsoft.Teams.Apps.Bart.Models
         public string Text { get; set; }
 
         /// <summary>
-        /// Gets or sets unique GUID related to activity Id from ActivityEntities table.
+        /// Gets or sets unique number to recognize incident.
         /// </summary>
-        [JsonProperty("activityReferenceId")]
+        public string ActivityReferenceNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets unique GUID to recognize incident.
+        /// </summary>
         public string ActivityReferenceId { get; set; }
     }
 }
