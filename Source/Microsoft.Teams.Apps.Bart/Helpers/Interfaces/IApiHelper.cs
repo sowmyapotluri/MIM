@@ -1,4 +1,4 @@
-﻿// <copyright file="IServiceNowHelper.cs" company="Microsoft Corporation">
+﻿// <copyright file="IApiHelper.cs" company="Microsoft Corporation">
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
@@ -9,12 +9,12 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Methods to perform Graph API calls for GET, POST requests.
+    /// Methods to perform API calls for GET, POST, PATCH requests.
     /// </summary>
     public interface IApiHelper
     {
         /// <summary>
-        /// Method to perform HTTP GET requests in Microsoft Graph APIs.
+        /// Method to perform HTTP GET requests in ServiceNow APIs.
         /// </summary>
         /// <typeparam name="T">Generic type class.</typeparam>
         /// <param name="url">Url to append on base Url for GET.(Example /api/messages).</param>
@@ -24,7 +24,7 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
         Task<HttpResponseMessage> GetAsync(string url, string token, Dictionary<string, string> headers = null);
 
         /// <summary>
-        /// Method to perform HTTP POST requests in Microsoft Graph APIs.
+        /// Method to perform HTTP POST requests in ServiceNow APIs.
         /// </summary>
         /// <typeparam name="T">Generic Type class.</typeparam>
         /// <param name="url">Url to append on base Url for POST.(Example /api/messages).</param>
@@ -35,7 +35,7 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
         Task<HttpResponseMessage> PostAsync(string url, string token, string payload = "", Dictionary<string, string> headers = null);
 
         /// <summary>
-        /// Method to perform HTTP POST requests in Microsoft Graph APIs.
+        /// Method to perform HTTP PATCH requests in ServiceNow APIs.
         /// </summary>
         /// <typeparam name="T">Generic Type class.</typeparam>
         /// <param name="url">URL to append on base URL for POST.(Example /api/messages).</param>

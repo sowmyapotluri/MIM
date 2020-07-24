@@ -2,17 +2,14 @@ import * as React from 'react';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, CheckboxProps } from '@fluentui/react';
-import { DatePicker, DayOfWeek, IDatePickerStrings } from 'office-ui-fabric-react/lib/DatePicker';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Guid } from "guid-typescript";
-import { mergeStyleSets } from 'office-ui-fabric-react/lib/Styling';
-import { AxiosResponse } from "axios";
 import "./EditWorkstream.scss";
 import { isNullOrUndefined } from 'util';
 import { ApplicationInsights, SeverityLevel } from '@microsoft/applicationinsights-web';
-import { ReactPlugin, withAITracking } from '@microsoft/applicationinsights-react-js';
+import { ReactPlugin } from '@microsoft/applicationinsights-react-js';
 import { createBrowserHistory } from "history";
-import { orderBy, forEach } from 'lodash';
+import { orderBy } from 'lodash';
 let reactPlugin = new ReactPlugin();
 const browserHistory = createBrowserHistory({ basename: '' });
 
@@ -74,7 +71,6 @@ export const Priority = {
     Normal: 2,
     High: 3
 }
-const todayDate: Date = new Date();
 
 export default class EditWorkstream extends React.Component<{}, IWorkstreamState> {
 
@@ -549,11 +545,6 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
     }
 
     public render(): JSX.Element {
-        const inputItems = [
-            'New',
-            'Suspended',
-            'Service Restored'
-        ];
 
         const userDetails = this.state.users.map((user) => {
             console.log("UserDetails", user)
@@ -575,7 +566,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
             if (!workstream.inActive) {
                 console.log("Refresh!", workstream)
                 let description = <Text key={"description" + index} content={workstream.description} />
-                let assignedTo = <Text key={"assignedTo" + index} content={workstream.assignedTo} />
+                let assignedTo = <Text key={"assignedTo" + index} content={workstream.assignedTo} color="brand" weight="semibold"/>
 
                 if (workstream.description === "" || this.state.workstreams.length - 1 === index) {
                     description = <Input className="inputField" defaultValue={workstream.description} value={workstream.description} key={"assignedto" + index} placeholder="Description" fluid name="assignedto" onChange={(e) => this.onWorkstreamDescriptionChange(e, index)} />

@@ -55,5 +55,30 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
                 return await client.SendAsync(request).ConfigureAwait(false);
             }
         }
+
+        /// <summary>
+        /// Method to perform HTTP POST requests in Microsoft Graph APIs.
+        /// </summary>
+        /// <typeparam name="T">Generic type class.</typeparam>
+        /// <param name="url">Url to append on base Url for GET.(Example /api/messages).</param>
+        /// <param name="token">Authentication token.</param>
+        /// <param name="payload">input JSON.</param>
+        /// <param name="headers">Header parameters.</param>
+        /// <returns>API response instance for GET request.</returns>
+        public async Task<HttpResponseMessage> PostAsync(string url, string token, string payload, Dictionary<string, string> headers = null)
+        {
+            using (var client = this.clientFactory.CreateClient("GraphApiHelper"))
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                if (!string.IsNullOrEmpty(payload))
+                {
+                    request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+                }
+
+                return await client.SendAsync(request).ConfigureAwait(false);
+            }
+        }
     }
 }

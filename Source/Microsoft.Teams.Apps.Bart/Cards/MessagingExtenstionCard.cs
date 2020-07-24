@@ -18,10 +18,12 @@ namespace Microsoft.Teams.Apps.Bart.Cards
     /// </summary>
     public class MessagingExtenstionCard : IncidentCard
     {
-        IncidentEntity incident = new IncidentEntity();
+        private IncidentEntity incident = new IncidentEntity();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagingExtenstionCard"/> class.
         /// </summary>
+        /// <param name="incidentEntity">The incident entity in table storage.</param>
         /// <param name="incident">The incident model with the latest details.</param>
         public MessagingExtenstionCard(IncidentEntity incidentEntity, Incident incident)
             : base(incident)
@@ -51,7 +53,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
         }
 
         /// <summary>
-        /// Returns go to original thread uri which will help in opening the original conversation about the ticket.
+        /// Returns go to original thread uri which will help in opening the original conversation about the incident.
         /// </summary>
         /// <param name="threadConversationId">The thread along with message Id stored in storage table.</param>
         /// <returns>Original thread uri.</returns>

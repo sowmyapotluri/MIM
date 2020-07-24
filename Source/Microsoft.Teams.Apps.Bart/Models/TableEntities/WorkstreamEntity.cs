@@ -37,26 +37,38 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         }
 
         /// <summary>
-        /// Gets or sets id of the message sent to the user.
+        /// Gets or sets displayName of user the workstream is assigned to.
         /// </summary>
         public string AssignedTo { get; set; }
 
         /// <summary>
-        /// Gets or sets windows time zone converted from IANA.
+        /// Gets or sets the priority of the workstream.
         /// </summary>
         public string Priority { get; set; }
 
         /// <summary>
-        /// Gets or sets windows time zone converted from IANA.
+        /// Gets or sets the description of the workstream.
         /// </summary>
         public string Description { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether workstream is completed or not.
+        /// </summary>
         public bool Status { get; set; }
 
+        /// <summary>
+        /// Gets or sets id of user the workstream is assigned to.
+        /// </summary>
         public string AssignedToId { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether workstream is deleted or not.
+        /// </summary>
         public bool InActive { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether workstream is recently created or not.
+        /// </summary>
         public bool New { get; set; }
     }
 }

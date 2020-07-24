@@ -22,6 +22,7 @@ namespace Microsoft.Teams.Apps.Bart
     using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.IdentityModel.Tokens;
+    using Microsoft.Teams.Apps.Bart.Authentication;
     using Microsoft.Teams.Apps.Bart.Bots;
     using Microsoft.Teams.Apps.Bart.Dialogs;
     using Microsoft.Teams.Apps.Bart.Helpers;
@@ -69,13 +70,15 @@ namespace Microsoft.Teams.Apps.Bart
                 httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             }).AddPolicyHandler(GetRetryPolicy());
 
+            //services.AddBartAuthentication(this.Configuration);
+            //services.AddSingleton<TokenAcquisitionHelper>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true,
-                    ValidAudiences = new List<string> { this.Configuration["AppBaseUri"] },
-                    ValidIssuers = new List<string> { this.Configuration["AppBaseUri"] },
+                    ValidAudiences = new List<string> { this.Configuration["AppBaseUri"] }, // "api://homedepotbart.azurewebsites.net/ad9dc5a5-48a5-4416-9a85-1f89caddb65f" },
+                    ValidIssuers = new List<string> { this.Configuration["AppBaseUri"] }, //, "https://login.microsoftonline.com/63889e9f-f4b2-4043-8b8a-f29d2722b814/v2.0", "https://sts.windows.net/63889e9f-f4b2-4043-8b8a-f29d2722b814/" },
                     ValidateIssuer = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(this.Configuration["SecurityKey"])),
@@ -148,19 +151,7 @@ namespace Microsoft.Teams.Apps.Bart
         /// <param name="env">Provides application-management functions and application services to a managed application within its application domain.</param>
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            //if (env.IsDevelopment())
-            //{
-            //    app.UseDeveloperExceptionPage();
-            //}
-            //else
-            //{
-            //    app.UseHsts();
-            //}
 
-            //app.UseAuthentication();
-            //app.UseDefaultFiles();
-            //app.UseStaticFiles();
-            //app.UseMvc();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

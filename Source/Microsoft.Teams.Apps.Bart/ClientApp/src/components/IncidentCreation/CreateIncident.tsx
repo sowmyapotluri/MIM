@@ -2,15 +2,12 @@
 import * as microsoftTeams from "@microsoft/teams-js";
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, TextArea } from '@fluentui/react';
-import { DatePicker, DayOfWeek, IDatePickerStrings } from 'office-ui-fabric-react/lib/DatePicker';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { mergeStyleSets } from 'office-ui-fabric-react/lib/Styling';
-import { AxiosResponse } from "axios";
 import "./CreateIncident.scss";
 import "./bootstrap-grid.css";
 import { isNullOrUndefined } from 'util';
 import { ApplicationInsights, SeverityLevel } from '@microsoft/applicationinsights-web';
-import { ReactPlugin, withAITracking } from '@microsoft/applicationinsights-react-js';
+import { ReactPlugin} from '@microsoft/applicationinsights-react-js';
 import { createBrowserHistory } from "history";
 let reactPlugin = new ReactPlugin();
 const browserHistory = createBrowserHistory({ basename: '' });
@@ -160,7 +157,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         microsoftTeams.getContext((context) => {
             this.requestedBy!.id = context.userObjectId!;
             this.requestedBy!.userPrincipalName = context.userPrincipalName!;
-            console.log("microsoft teams", context, this.requestedBy!)
+            console.log("microsoft teams", Date.now(), this.requestedBy!)
         });
 
         document.removeEventListener("keydown", this.escFunction, false);
@@ -365,7 +362,11 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 Priority: 7,
                 Bridge: this.state.selectedBridge.code,
                 bridgeDetails: this.state.selectedBridge,
-                Scope: this.scope
+                Scope: this.scope,
+                RequestedBy: this.requestedBy!.displayName!,
+                RequestedById: this.requestedBy!.id!,
+                RequestedFor: isNullOrUndefined(this.requestedFor)?this.requestedBy!.displayName!:this.requestedFor!.displayName!,
+                RequestedForId: isNullOrUndefined(this.requestedFor)?this.requestedBy!.id!:this.requestedFor!.id!,
             },
             Workstreams: this.state.workstreams
         };
@@ -576,7 +577,10 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         items={userInput}
                                         placeholder="Start typing a name"
                                         onSelectedChange={this.requestedAssigned}
-                                        defaultValue={this.requestedBy!.displayName}
+                                        value={[{
+                                            header: this.requestedBy!.displayName,
+                                            content: this.requestedBy!.userPrincipalName
+                                        }]}
                                     />
                                 </div>
                             </div>

@@ -18,19 +18,25 @@ namespace Microsoft.Teams.Apps.Bart.Cards
     using Newtonsoft.Json;
 
     /// <summary>
-    /// Class having method to return welcome card attachment.
+    /// Class having method to return incident card attachment.
     /// </summary>
     public class IncidentCard
     {
-        Incident incident = new Incident();
 
-        IncidentEntity IncidentEntity = new IncidentEntity();
+        private readonly Incident incident = new Incident();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IncidentCard"/> class.
+        /// </summary>
+        /// <param name="incident">Incident object.</param>
         public IncidentCard(Incident incident)
         {
             this.incident = incident;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IncidentCard"/> class.
+        /// </summary>
         public IncidentCard()
         {
         }
@@ -38,11 +44,12 @@ namespace Microsoft.Teams.Apps.Bart.Cards
         /// <summary>
         /// Get welcome card attachment.
         /// </summary>
+        /// <param name="incidentEntity">Incident object from table storage.</param>
+        /// <param name="title">Title text for the card.</param>
+        /// <param name="footer">Flag to show the status of the incident.</param>
         /// <returns>Adaptive card attachment for bot introduction and bot commands to start with.</returns>
         public Attachment GetIncidentAttachment(IncidentEntity incidentEntity = null, string title = "New Incident reported", bool footer = false)
         {
-            this.IncidentEntity = incidentEntity;
-
             var footerContainer = new AdaptiveContainer();
             var activityColumnSet = new AdaptiveColumnSet
             {
@@ -74,8 +81,8 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                                 Title = "Update",
                                                 Data = new TeamsAdaptiveSubmitActionData
                                                 {
-                                                    IncidentId = incident.Id,
-                                                    IncidentNumber = incident.Number,
+                                                    IncidentId = this.incident.Id,
+                                                    IncidentNumber = this.incident.Number,
                                                     Text = "UpdateActivity",
                                                 },
                                             },
@@ -139,9 +146,9 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                            {
                                                Weight = AdaptiveTextWeight.Bolder,
                                                Size = AdaptiveTextSize.Medium,
-                                               Color = incident.Priority == "7" ? AdaptiveTextColor.Attention: AdaptiveTextColor.Default,
+                                               Color = this.incident.Priority == "7" ? AdaptiveTextColor.Attention: AdaptiveTextColor.Default,
                                                HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                               Text = incident.Priority == "7" ? "High Priority!" : " ",
+                                               Text = this.incident.Priority == "7" ? "High Priority!" : " ",
                                            },
                                        },
                                    },
@@ -163,7 +170,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                         Size = AdaptiveTextSize.Medium,
                                         Color = AdaptiveTextColor.Accent,
                                         Weight = AdaptiveTextWeight.Bolder,
-                                        Text = string.Format("ID# {0}", incident.Number),
+                                        Text = string.Format("ID# {0}", this.incident.Number),
                                     },
                                 },
                             },
@@ -175,9 +182,9 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                     new AdaptiveTextBlock
                                     {
                                         Size = AdaptiveTextSize.Default,
-                                        Color = incident.Status == "1" ? AdaptiveTextColor.Good: AdaptiveTextColor.Default,
+                                        Color = this.incident.Status == "1" ? AdaptiveTextColor.Good: AdaptiveTextColor.Default,
                                         HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                        Text = incident.Status == "1" ? "New" : incident.Status == "2" ? "Suspended" : "Service Restored",
+                                        Text = this.incident.Status == "1" ? "New" : this.incident.Status == "2" ? "Suspended" : "Service Restored",
                                     },
                                 },
                             },
@@ -185,12 +192,12 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     },
                     new AdaptiveFactSet
                     {
-                        Facts = BuildFactSet(incident, true),
+                        Facts = BuildFactSet(this.incident, true),
                     },
                     activityColumnSet,
                     new AdaptiveFactSet
                     {
-                        Facts = BuildFactSet(incident, false),
+                        Facts = BuildFactSet(this.incident, false),
                     },
                     footerContainer,
                 },
@@ -205,6 +212,10 @@ namespace Microsoft.Teams.Apps.Bart.Cards
             return adaptiveCardAttachment;
         }
 
+        /// <summary>
+        /// Return the appropriate set of card actions based on the state and information in the incident.
+        /// </summary>
+        /// <returns>Adaptive card actions.</returns>
         protected virtual List<AdaptiveAction> BuildActions()
         {
             return new List<AdaptiveAction>
@@ -260,7 +271,8 @@ namespace Microsoft.Teams.Apps.Bart.Cards
         /// <summary>
         /// Return the appropriate fact set based on the state and information in the ticket.
         /// </summary>
-        /// <param name="localTimestamp">The current timestamp.</param>
+        /// <param name="incident">Incident object.</param>
+        /// <param name="half">Flag identifier to know which factset set.</param>
         /// <returns>The fact set showing the necessary details.</returns>
         private static List<AdaptiveFact> BuildFactSet(Incident incident, bool half)
         {
@@ -341,7 +353,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
         }
 
         /// <summary>
-        /// Return the appropriate status choices for ticket status.
+        /// Return the appropriate status choices for incident status.
         /// </summary>
         /// <returns>An adaptive element which contains the dropdown choices.</returns>
         private static AdaptiveChoiceSetInput GetAdaptiveChoiceSetTitleInput()

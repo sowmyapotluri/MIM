@@ -1,6 +1,7 @@
 import axios from './axiosJWTDecorator';
 import { getBaseUrl } from '../configVariables';
 import { AxiosResponse } from "axios";
+import { IIncidentEntity } from '../components/Dashboard/Dashboard';
 
 
 let baseAxiosUrl = getBaseUrl() + '/api';
@@ -15,43 +16,8 @@ export const getClientId = async (): Promise<AxiosResponse<string>> => {
     return await axios.get(url);
 }
 
-
-export const GetResourceStringsApi = async (): Promise<AxiosResponse<JSON>> => {
-    let url = baseAxiosUrl + "/ResourcesApi/GetResourceStrings";
+export const getIncidents = async (date: string): Promise<AxiosResponse<IIncidentEntity[]>> => {
+    let url = baseAxiosUrl + "/IncidentApi/GetAllIncidents?weekDay=" + date;
     return await axios.get(url);
-}
 
-export const GetResourceStringstest = async (): Promise<AxiosResponse<string>> => {
-    let url = baseAxiosUrl + "/ResourcesApi/GetResourceStringsTest";
-    return await axios.get(url);
 }
-export const getSupportedTimeZones = async (): Promise<AxiosResponse<JSON>> => {
-    let url = baseAxiosUrl + "/MeetingApi/GetSupportedTimeZonesAsync";
-    return await axios.get(url);
-}
-export const getSavedTimeZone = async (): Promise<AxiosResponse<JSON>> => {
-    let url = baseAxiosUrl + "/MeetingApi/GetUserTimeZoneAsync";
-    return await axios.get(url);
-}
-
-export const saveUserTimeZone = async (payload: {}): Promise<AxiosResponse<void>> => {
-    let url = baseAxiosUrl + "/MeetingApi/SaveTimeZoneAsyn";
-    return await axios.post(url, payload);
-}
-
-export const getTopNRooms = async (payload: {}): Promise<AxiosResponse<void>> => {
-    let url = baseAxiosUrl + "/MeetingApi/TopNRoomsAsync";
-    return await axios.post(url, payload);
-}
-
-export const createMeeting= async (payload: {}): Promise<AxiosResponse<void>> => {
-    let url = baseAxiosUrl + "/MeetingApi/CreateMeetingAsync";
-    return await axios.post(url, payload);
-}
-
-
-export const filterRooms = async (payload: {}): Promise<AxiosResponse<void>> => {
-    let url = baseAxiosUrl + "/MeetingApi/SearchRoomAsync";
-    return await axios.post(url, payload);
-}
-

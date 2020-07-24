@@ -9,8 +9,9 @@ import SignInPage from "./components/SignInPage/signInPage";
 import SignInSimpleStart from "./components/SignInPage/signInSimpleStart";
 import SignInSimpleEnd from "./components/SignInPage/signInSimpleEnd";
 import HelpPage from './components/HelpPage/HelpPage';
-import EditWorkstream from "./components/EditWorkstream/EditWorkstream"
-import CreateIncident from "./components/IncidentCreation/CreateIncident"
+import EditWorkstream from "./components/EditWorkstream/EditWorkstream";
+import CreateIncident from "./components/IncidentCreation/CreateIncident";
+import Dashboard from "./components/Dashboard/Dashboard";
 
 export interface IAppState {
     theme: string;
@@ -110,6 +111,7 @@ class App extends React.Component<{}, IAppState> {
                             <Route exact path="/help" component={HelpPage} />
                             <Route exact path="/incident" component={CreateIncident} />
                             <Route exact path="/editWorkstream" component={EditWorkstream} />
+                            <Route exact path="/dashboard" component={Dashboard} />
                         </Switch>
                     </BrowserRouter>
                 </div>

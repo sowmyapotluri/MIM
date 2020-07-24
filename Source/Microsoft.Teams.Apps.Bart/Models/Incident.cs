@@ -59,6 +59,18 @@ namespace Microsoft.Teams.Apps.Bart.Models
         public string CreatedOn { get; set; }
 
         /// <summary>
+        /// Gets or sets incident due datetime.
+        /// </summary>
+        [JsonProperty("due_date")]
+        public string DueBy { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident created datetime.
+        /// </summary>
+        [JsonProperty("u_current_activity")]
+        public string CurrentActivity { get; set; }
+
+        /// <summary>
         /// Gets or sets incident updated datetime.
         /// </summary>
         [JsonProperty("sys_updated_on")]

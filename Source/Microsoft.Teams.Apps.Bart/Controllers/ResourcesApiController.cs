@@ -76,47 +76,6 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
         }
 
         /// <summary>
-        /// Get resource strings for displaying in client app.
-        /// </summary>
-        /// <returns>Object containing required strings.</returns>
-        public ActionResult GetResourceStrings()
-        {
-            try
-            {
-                var strings = new
-                {
-                    Strings.Timezone,
-                    Strings.SelectTimezone,
-                    Strings.LoadingMessage,
-                    Strings.MeetingLength,
-                    Strings.SearchRoom,
-                    Strings.BookRoom,
-                    Strings.SearchRoomDropdownPlaceholder,
-                    Strings.ExceptionResponse,
-                    Strings.TimezoneNotSupported,
-                    Strings.RoomUnavailable,
-                    Strings.SelectDurationRoom,
-                    Strings.Location,
-                    Strings.AddButton,
-                    Strings.DoneButton,
-                    Strings.NoFavoriteRoomsTaskModule,
-                    Strings.CantAddMoreRooms,
-                    Strings.FavoriteRoomExist,
-                    Strings.SelectRoomToAdd,
-                    Strings.NoFavoritesDescriptionTaskModule,
-                    Strings.SignInErrorMessage,
-                    Strings.InvalidTenant,
-                };
-                return this.Ok(strings);
-            }
-            catch (Exception ex)
-            {
-                this.telemetryClient.TrackException(ex);
-                return this.StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
-
-        /// <summary>
         /// Get status and conference bridges for displaying in client app.
         /// </summary>
         /// <returns>Object containing required strings.</returns>
@@ -137,6 +96,8 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
         /// <summary>
         /// Get user data from AAD.
         /// </summary>
+        /// <param name="fromFlag">Flag to identify whether to check AAD or a specific team.</param>
+        /// <param name="searchQuery">Search query.</param>
         /// <returns>Object containing list of users.</returns>
         public async Task<ActionResult> GetUsersAsync([FromQuery]int fromFlag, [FromQuery]string searchQuery)
         {
@@ -145,7 +106,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 var claims = this.GetUserClaims();
                 this.telemetryClient.TrackTrace($"User {claims.UserObjectIdentifer} submitted request to get supported time zones.");
 
-                var token = await this.tokenHelper.GetUserTokenAsync("29:1gMQTXLxN-dQImkrSeGvgGSvxl4VTOaSuwdqnH8RuWvysIlFR3rJRwy6vZGmiiR3BDHzJUZxDpegnBNWhbNGFTw").ConfigureAwait(false);
+                var token = await this.tokenHelper.GetUserTokenAsync(claims.FromId).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(token))
                 {
                     this.telemetryClient.TrackTrace($"Azure Active Directory access token for user {claims.UserObjectIdentifer} is empty.");

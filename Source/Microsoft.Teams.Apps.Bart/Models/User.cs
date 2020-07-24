@@ -40,5 +40,11 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// </summary>
         [JsonProperty("serviceUrl")]
         public string ServiceUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets profile picture.
+        /// </summary>
+        [JsonProperty("profilePicture")]
+        public string ProfilePicture { get; set; }
     }
 }

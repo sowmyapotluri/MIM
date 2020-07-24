@@ -12,7 +12,7 @@ const SignInPage: React.FunctionComponent<RouteComponentProps> = props => {
             url: window.location.origin + "/signin-simple-start",
             successCallback: () => {
                 console.log("Login succeeded!");
-                window.location.href = "/dls";
+                window.location.href = "/dashboard";
             },
             failureCallback: (reason) => {
                 console.log("Login failed: " + reason);

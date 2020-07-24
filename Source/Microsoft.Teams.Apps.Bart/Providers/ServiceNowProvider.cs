@@ -35,7 +35,7 @@
         /// <summary>
         /// Search incidents URL.
         /// </summary>
-        private readonly string searchIncidents = "/api/now/table/incident?sysparm_query=short_descriptionLIKE{0}%5EORnumberLIKE{0}&sysparm_display_value=true&sysparm_fields=number,short_description,sys_created_on,work_notes,sys_id,state,sys_updated_on&sysparm_limit=10";
+        private readonly string searchIncidents = "api/now/table/incident?sysparm_query=due_date{0}%5Edue_dateISNOTEMPTY%5Esys_created_by%3DSVC_teams_automation&sysparm_display_value=true&sysparm_fields=number%2Cshort_description%2Csys_created_on%2Cwork_notes%2Csys_id%2Cu_status%2Csys_updated_on%2Cdue_date%2Cu_current_activity&sysparm_limit=10";
 
         /// <summary>
         /// Get all incidents URL.
@@ -223,7 +223,8 @@
         /// <summary>
         /// Get incidents based on factors.
         /// </summary>
-        /// <param name="commandId">Query for searching. </param>
+        /// <param name="commandId">Command id. </param>
+        /// <param name="searchQuery">Query for searching. </param>
         /// <param name="token">Active Directory access token.</param>
         /// <returns>Event response object.</returns>
         public async Task<dynamic> GetIncidentAsync(string commandId, string searchQuery, string token)

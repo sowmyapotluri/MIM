@@ -1,32 +1,14 @@
-﻿// <copyright file="IncidentEntity.cs" company="Microsoft Corporation">
+﻿// <copyright file="IncidentListObject.cs" company="Microsoft Corporation">
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
-namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
+namespace Microsoft.Teams.Apps.Bart.Models
 {
-    using Microsoft.WindowsAzure.Storage.Table;
-
     /// <summary>
-    /// Table used for storing additional incident.
+    /// Model to define data from both servicenow and tablestorage.
     /// </summary>
-    public class IncidentEntity : TableEntity
+    public class IncidentListObject
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IncidentEntity"/> class.
-        /// </summary>
-        public IncidentEntity()
-        {
-        }
-
-        /// <summary>
-        /// Gets or sets user Active Directory object Id.
-        /// </summary>
-        //public string UserAdObjectId
-        //{
-        //    get { return this.RowKey; }
-        //    set { this.RowKey = value; }
-        //}
-
         /// <summary>
         /// Gets or sets conversation id of the user.
         /// </summary>
@@ -65,12 +47,7 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         /// <summary>
         /// Gets or sets assigned to user displayName.
         /// </summary>
-        public string AssignedTo { get; set; }
-
-        /// <summary>
-        /// Gets or sets assigned to user AadId.
-        /// </summary>
-        public string AssignedToId { get; set; }
+        public User AssignedTo { get; set; }
 
         /// <summary>
         /// Gets or sets id of the message sent to the team.
@@ -115,27 +92,26 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         /// <summary>
         /// Gets or sets requested by display name.
         /// </summary>
-        public string RequestedBy { get; set; }
-
-        /// <summary>
-        /// Gets or sets requested by id.
-        /// </summary>
-        public string RequestedById { get; set; }
+        public User RequestedBy { get; set; }
 
         /// <summary>
         /// Gets or sets requested for display name.
         /// </summary>
-        public string RequestedFor { get; set; }
-
-        /// <summary>
-        /// Gets or sets requested for id.
-        /// </summary>
-        public string RequestedForId { get; set; }
+        public User RequestedFor { get; set; }
 
         /// <summary>
         /// Gets or sets incident current activity.
         /// </summary>
         public string CurrentActivity { get; set; }
 
+        /// <summary>
+        /// Gets or sets sys_id.
+        /// </summary>
+        public string Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets incident number.
+        /// </summary>
+        public string Number { get; set; }
     }
 }

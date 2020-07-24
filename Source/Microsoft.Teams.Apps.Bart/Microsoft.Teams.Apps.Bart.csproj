@@ -76,6 +76,7 @@
     <Folder Include="ClientApp\src\components\HelpPage\" />
     <Folder Include="ClientApp\src\components\SignInPage\" />
     <Folder Include="ClientApp\src\components\ErrorPage\" />
+    <Folder Include="Authentication\" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

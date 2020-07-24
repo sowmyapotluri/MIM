@@ -1,0 +1,64 @@
+.deleteIcon{position: relative;font-size: 16px;}
+.ui-dropdown__container {
+    height: 32px !important;
+}
+h4 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+i.addIcon {
+    position: relative;
+    top: 7px;
+    margin-right: 0px !important;
+    font-weight: bold;
+}
+table {
+    border-collapse: collapse;
+}
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.25rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+  }
+  
+  .table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+  }
+  
+ 
+  .table-bordered {
+    border: 1px solid #dee2e6;
+  }
+  
+  .table-bordered th,
+  .table-bordered td {
+    border: 1px solid #dee2e6;
+  }
+  
+ .table-bordered thead th,
+  .table-bordered thead td {
+    border-bottom-width: 2px;
+  }
+.table-borderless th,
+.table-borderless td,
+.table-borderless thead th,
+.table-borderless tbody + tbody {
+  border: 0;
+}
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .table-hover tbody tr:hover {
+    color: #212529;
+    background-color: rgba(0, 0, 0, 0.075);
+  }
+  

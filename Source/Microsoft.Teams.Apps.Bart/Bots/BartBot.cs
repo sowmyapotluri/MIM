@@ -208,8 +208,25 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             {
 
                 var activity = turnContext.Activity;
-                turnContext.Activity.TryGetChannelData<TeamsChannelData>(out var teamsChannelData);
                 var token = this.tokenHelper.GenerateAPIAuthToken(activity.From.AadObjectId, activity.ServiceUrl, activity.From.Id, jwtExpiryMinutes: 60);
+                turnContext.Activity.TryGetChannelData<TeamsChannelData>(out var teamsChannelData);
+                if (action.CommandId == "viewincident")
+                {
+                    return await Task.FromResult(new MessagingExtensionActionResponse
+                    {
+                        Task = new TaskModuleContinueResponse
+                        {
+                            Value = new TaskModuleTaskInfo
+                            {
+                                Height = "large",
+                                Width = "large",
+                                Title = Strings.CreateIncident,
+                                Url = string.Format(CultureInfo.InvariantCulture, "{0}/dashboard?telemetry={1}&token={2}", this.appBaseUri, this.instrumentationKey, token),
+
+                            },
+                        },
+                    });
+                }
                 string description = string.Empty;  // variable to hold preloaded description if available.
                 if (JObject.Parse(activity.Value.ToString()).ContainsKey("messagePayload"))
                 {
@@ -533,6 +550,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                     PersonalConversationId = turnContext.Activity.Conversation.Id,
                     PersonalActivityId = personalChatActivityId.Id,
                     ReplyToId = turnContext.Activity.ReplyToId,
+                    Status = "1",
                 };
                 await this.incidentStorageProvider.AddAsync(incidentEntity).ConfigureAwait(false);
                 var workstreams = await this.workstreamStorageProvider.GetAllAsync(valuesFromTaskModule.Number).ConfigureAwait(false);
@@ -596,14 +614,25 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                     if (!string.IsNullOrEmpty(adaptiveCardSubmitActionData.Activity))
                     {
                         var activityToUpdate = JsonConvert.DeserializeObject<TeamsAdaptiveSubmitActionData>(turnContext.Activity.Value.ToString());
-                        var workNote = string.Format("{0}: {1}", turnContext.Activity.From.Name, activityToUpdate.Activity);
+                        var currentActivity = string.Format("{0}: {1}", turnContext.Activity.From.Name, activityToUpdate.Activity);
                         var updateIncident = new Incident
                         {
                             Id = activityToUpdate.IncidentId,
-                            WorkNotes = workNote,
+                            CurrentActivity = currentActivity,
                         };
                         await this.serviceNowProvider.UpdateIncidentAsync(updateIncident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                        await turnContext.SendActivityAsync($"Incident: {activityToUpdate.IncidentNumber} current activity updated {activityToUpdate.Activity} by {turnContext.Activity.From.Name}");
+                        var incidentEntity = await this.incidentStorageProvider.GetAsync(activityToUpdate.IncidentNumber).ConfigureAwait(false);
+                        var connector = new ConnectorClient(new Uri(incidentEntity.ServiceUrl), this.microsoftAppCredentials);
+                        var activity = new Activity(ActivityTypes.Message)
+                        {
+                            Id = incidentEntity.TeamActivityId,
+                            Conversation = new ConversationAccount { Id = incidentEntity.TeamConversationId },
+                            Text = $"Incident: {activityToUpdate.IncidentNumber} current activity updated with: {activityToUpdate.Activity} by {turnContext.Activity.From.Name}",
+                        };
+
+                        await connector.Conversations.SendToConversationAsync(activity, cancellationToken);
+
+                        // await turnContext.SendActivityAsync($"Incident: {activityToUpdate.IncidentNumber} current activity updated with: {activityToUpdate.Activity} by {turnContext.Activity.From.Name}");
                     }
                     else
                     {
@@ -615,6 +644,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                             Status = values.Action,
                         };
                         updateObject = await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        await this.incidentStorageProvider.AddAsync(new IncidentEntity { PartitionKey = values.IncidentNumber, RowKey = values.IncidentId, Status=values.Action}).ConfigureAwait(false);
                         updateObject.BridgeDetails = await this.conferenceBridgesStorageProvider.GetAsync(incidentDetails.BridgeId).ConfigureAwait(false);
                         var incidentCard = new IncidentCard(updateObject);
                         var attachment = incidentCard.GetIncidentAttachment();
@@ -630,10 +660,14 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                         }
 
                         var connector = new ConnectorClient(new Uri(incidentDetails.ServiceUrl), this.microsoftAppCredentials);
-                        var updateResponse = await connector.Conversations.UpdateActivityAsync(incidentDetails.PersonalConversationId, incidentDetails.PersonalActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken).ConfigureAwait(false);
-                        var updateResponseTeam = await connector.Conversations.UpdateActivityAsync(incidentDetails.TeamConversationId, incidentDetails.TeamActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken);
+                        var updateResponse = connector.Conversations.UpdateActivityAsync(incidentDetails.PersonalConversationId, incidentDetails.PersonalActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken);
+                        var updateResponseTeam = connector.Conversations.UpdateActivityAsync(incidentDetails.TeamConversationId, incidentDetails.TeamActivityId, (Activity)MessageFactory.Attachment(attachment), cancellationToken);
+                        await Task.WhenAll(updateResponse, updateResponseTeam).ConfigureAwait(false);
                     }
 
+                    break;
+                case "HI":
+                    await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(WelcomeCard.GetWelcomeCardAttachment()), cancellationToken).ConfigureAwait(false);
                     break;
 
                 default:
