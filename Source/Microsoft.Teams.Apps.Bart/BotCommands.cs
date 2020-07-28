@@ -10,9 +10,9 @@ namespace Microsoft.Teams.Apps.Bart
     public static class BotCommands
     {
         /// <summary>
-        /// Book room bot command which will show user favorites list card.
+        /// Create incident command.
         /// </summary>
-        public const string CreateIncident = "NEW INCIDENT";
+        public const string CreateIncident = "CREATE INCIDENT";
 
         /// <summary>
         /// Login command.
@@ -33,5 +33,16 @@ namespace Microsoft.Teams.Apps.Bart
         /// Get workstreams command.
         /// </summary>
         public const string EditWorkstream = "EDIT WORKSTREAM";
+
+        /// <summary>
+        /// View workstreams command.
+        /// </summary>
+        public const string ViewWorkstream = "VIEW WORKSTREAM";
+
+        /// <summary>
+        /// View workstreams command.
+        /// </summary>
+        public const string TakeTour = "TAKE A TOUR";
+
     }
 }

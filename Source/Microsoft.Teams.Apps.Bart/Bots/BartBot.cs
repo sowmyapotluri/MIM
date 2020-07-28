@@ -208,9 +208,10 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             {
 
                 var activity = turnContext.Activity;
+                var isGroup = turnContext.Activity.Conversation!.IsGroup.HasValue ? turnContext.Activity.Conversation!.IsGroup.Value : false;
                 var token = this.tokenHelper.GenerateAPIAuthToken(activity.From.AadObjectId, activity.ServiceUrl, activity.From.Id, jwtExpiryMinutes: 60);
                 turnContext.Activity.TryGetChannelData<TeamsChannelData>(out var teamsChannelData);
-                if (action.CommandId == "viewincident")
+                if (action.CommandId == "viewincident" && isGroup)
                 {
                     return await Task.FromResult(new MessagingExtensionActionResponse
                     {
@@ -220,34 +221,36 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                             {
                                 Height = "large",
                                 Width = "large",
-                                Title = Strings.CreateIncident,
+                                Title = Strings.ViewIncidents,
                                 Url = string.Format(CultureInfo.InvariantCulture, "{0}/dashboard?telemetry={1}&token={2}", this.appBaseUri, this.instrumentationKey, token),
 
                             },
                         },
                     });
                 }
-                string description = string.Empty;  // variable to hold preloaded description if available.
-                if (JObject.Parse(activity.Value.ToString()).ContainsKey("messagePayload"))
+                else if (action.CommandId == "addincident")
                 {
-                    description = JObject.Parse(activity.Value.ToString())["messagePayload"]["body"]["content"].ToString();
-                }
-
-                return await Task.FromResult(new MessagingExtensionActionResponse
-                {
-                    Task = new TaskModuleContinueResponse
+                    string description = string.Empty;  // variable to hold preloaded description if available.
+                    if (JObject.Parse(activity.Value.ToString()).ContainsKey("messagePayload"))
                     {
-                        Value = new TaskModuleTaskInfo
+                        description = JObject.Parse(activity.Value.ToString())["messagePayload"]["body"]["content"].ToString();
+                    }
+
+                    return await Task.FromResult(new MessagingExtensionActionResponse
+                    {
+                        Task = new TaskModuleContinueResponse
                         {
-                            Height = "large",
-                            Width = "large",
-                            Title = Strings.CreateIncident,
-                            Url = string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}&description={3}&displayName={4}", this.appBaseUri, this.instrumentationKey, token, description, turnContext.Activity.From.Name),
+                            Value = new TaskModuleTaskInfo
+                            {
+                                Height = "large",
+                                Width = "large",
+                                Title = Strings.CreateIncident,
+                                Url = string.Format(CultureInfo.InvariantCulture, "{0}/incident?telemetry={1}&token={2}&description={3}&displayName={4}", this.appBaseUri, this.instrumentationKey, token, description, turnContext.Activity.From.Name),
 
+                            },
                         },
-                    },
-                });
-
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -281,6 +284,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                     return default;
                 }
 
+                postedObject.Status = "1";
                 var bridge = await this.conferenceBridgesStorageProvider.GetAsync(postedObject.Bridge).ConfigureAwait(false);
                 var userConversationId = await this.userConfigurationStorageProvider.GetAsync(turnContext.Activity.From.AadObjectId).ConfigureAwait(false);
                 var connector = new ConnectorClient(new Uri(turnContext.Activity.ServiceUrl), this.microsoftAppCredentials);
@@ -299,6 +303,8 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                     RowKey = postedObject.Id,
                     PersonalConversationId = userConversationId.ConversationId,
                     PersonalActivityId = cardDetailsInChat.Id,
+                    Status = "1",
+                    Priority = postedObject.Priority,
                 };
                 var insert = await this.incidentStorageProvider.AddAsync(incidentEntity).ConfigureAwait(false);
             }
@@ -537,6 +543,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             if (valuesFromTaskModule != null)
             {
                 var channelDetails = await this.conferenceBridgesStorageProvider.GetAsync(valuesFromTaskModule.Bridge).ConfigureAwait(false);
+                valuesFromTaskModule.Status = "1";
                 var card = new IncidentCard(valuesFromTaskModule).GetIncidentAttachment();
                 var personalChatActivityId = await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(card), cancellationToken).ConfigureAwait(false);
                 ConversationResourceResponse teamCard = await this.SendCardToTeamAsync(turnContext, card, channelDetails.ChannelId, cancellationToken).ConfigureAwait(false);
@@ -604,8 +611,6 @@ namespace Microsoft.Teams.Apps.Bart.Bots
 
             switch (command.ToUpperInvariant())
             {
-                case BotCommands.Help:
-                    break;
 
                 case "CARDACTION":
                     var adaptiveCardSubmitActionData = JsonConvert.DeserializeObject<TeamsAdaptiveSubmitActionData>(turnContext.Activity.Value.ToString());
@@ -641,22 +646,24 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                         var updateObject = new Incident
                         {
                             Id = values.IncidentId,
-                            Status = values.Action,
+                            State = values.Action,
                         };
-                        updateObject = await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                        await this.incidentStorageProvider.AddAsync(new IncidentEntity { PartitionKey = values.IncidentNumber, RowKey = values.IncidentId, Status=values.Action}).ConfigureAwait(false);
+                        updateObject = await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false); //await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        await this.incidentStorageProvider.AddAsync(new IncidentEntity { PartitionKey = values.IncidentNumber, RowKey = values.IncidentId, Status = values.Action}).ConfigureAwait(false);
                         updateObject.BridgeDetails = await this.conferenceBridgesStorageProvider.GetAsync(incidentDetails.BridgeId).ConfigureAwait(false);
+                        updateObject.Scope = incidentDetails.Scope;
+                        updateObject.Status = values.Action;
                         var incidentCard = new IncidentCard(updateObject);
                         var attachment = incidentCard.GetIncidentAttachment();
                         if (values.Title != "Incident New")
                         {
-                            attachment = incidentCard.GetIncidentAttachment(null, "Incident close", true);
+                            attachment = incidentCard.GetIncidentAttachment(null, "Incident closed", true);
                         }
 
-                        if (values.Action != "1")
+                        if (values.Action != "1" || values.Title != "Incident New")
                         {
-                            //    updateObject.BridgeDetails.Available = true;
-                            //    await this.conferenceBridgesStorageProvider.AddAsync(updateObject.BridgeDetails).ConfigureAwait(false);
+                            updateObject.BridgeDetails.Available = true;
+                            await this.conferenceBridgesStorageProvider.AddAsync(updateObject.BridgeDetails).ConfigureAwait(false);
                         }
 
                         var connector = new ConnectorClient(new Uri(incidentDetails.ServiceUrl), this.microsoftAppCredentials);
@@ -666,8 +673,16 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                     }
 
                     break;
-                case "HI":
+                case BotCommands.Help:
+                case BotCommands.CreateIncident:
                     await turnContext.SendActivityAsync(activity: MessageFactory.Attachment(WelcomeCard.GetWelcomeCardAttachment()), cancellationToken).ConfigureAwait(false);
+                    break;
+
+                //case BotCommands.CreateIncident:
+                //    new TaskModuleAction(Strings.CreateIncident, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.CreateIncident }) });
+                //    break;
+                case BotCommands.TakeTour:
+                    await turnContext.SendActivityAsync(activity: MessageFactory.Carousel(TourCard.GetTourCards(this.appBaseUri)), cancellationToken).ConfigureAwait(false);
                     break;
 
                 default:

@@ -61,92 +61,11 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Add.
+        ///   Looks up a localized string similar to Incident conference bridge.
         /// </summary>
-        public static string AddButton {
+        public static string Bridge {
             get {
-                return ResourceManager.GetString("AddButton", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Add to favorites.
-        /// </summary>
-        public static string AddFavorite {
-            get {
-                return ResourceManager.GetString("AddFavorite", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Add and remove favorite rooms.
-        /// </summary>
-        public static string AddFavTaskModuleSubtitle {
-            get {
-                return ResourceManager.GetString("AddFavTaskModuleSubtitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Search all rooms.
-        /// </summary>
-        public static string AnotherRoomTaskModuleSubtitle {
-            get {
-                return ResourceManager.GetString("AnotherRoomTaskModuleSubtitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Available.
-        /// </summary>
-        public static string Available {
-            get {
-                return ResourceManager.GetString("Available", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Book room.
-        /// </summary>
-        public static string BookRoom {
-            get {
-                return ResourceManager.GetString("BookRoom", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Building name.
-        /// </summary>
-        public static string BuildingName {
-            get {
-                return ResourceManager.GetString("BuildingName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Meeting is cancelled by organizer using Book-a-room bot..
-        /// </summary>
-        public static string CancellationComment {
-            get {
-                return ResourceManager.GetString("CancellationComment", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cancel meeting.
-        /// </summary>
-        public static string CancelMeeting {
-            get {
-                return ResourceManager.GetString("CancelMeeting", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to You cannot add more than 15 rooms to your favorites..
-        /// </summary>
-        public static string CantAddMoreRooms {
-            get {
-                return ResourceManager.GetString("CantAddMoreRooms", resourceCulture);
+                return ResourceManager.GetString("Bridge", resourceCulture);
             }
         }
         
@@ -160,11 +79,29 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Close the incident.
+        /// </summary>
+        public static string CloseIncidentTextCarousel {
+            get {
+                return ResourceManager.GetString("CloseIncidentTextCarousel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot recognize **{command}** as valid command. Please type &apos;Help&apos; to see all available commands..
         /// </summary>
         public static string CommandNotRecognized {
             get {
                 return ResourceManager.GetString("CommandNotRecognized", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Created on.
+        /// </summary>
+        public static string CreatedOn {
+            get {
+                return ResourceManager.GetString("CreatedOn", resourceCulture);
             }
         }
         
@@ -178,11 +115,11 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} at {1} ({2} mins).
+        ///   Looks up a localized string similar to Description.
         /// </summary>
-        public static string DateFormat {
+        public static string Description {
             get {
-                return ResourceManager.GetString("DateFormat", resourceCulture);
+                return ResourceManager.GetString("Description", resourceCulture);
             }
         }
         
@@ -210,33 +147,6 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         public static string ExceptionResponse {
             get {
                 return ResourceManager.GetString("ExceptionResponse", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Room availability is outdated. Please refresh card and try again..
-        /// </summary>
-        public static string Expired {
-            get {
-                return ResourceManager.GetString("Expired", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to That room is already one of your favorites..
-        /// </summary>
-        public static string FavoriteRoomExist {
-            get {
-                return ResourceManager.GetString("FavoriteRoomExist", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Modified favorite rooms list. Please refresh..
-        /// </summary>
-        public static string FavoriteRoomsModified {
-            get {
-                return ResourceManager.GetString("FavoriteRoomsModified", resourceCulture);
             }
         }
         
@@ -286,218 +196,30 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Click on the button below to add or remove rooms from your favorites list..
+        ///   Looks up a localized string similar to Report an incident
+        ///.
         /// </summary>
-        public static string ManageFavoriteCardDescription {
+        public static string ReportIncidentHeaderCarousel {
             get {
-                return ResourceManager.GetString("ManageFavoriteCardDescription", resourceCulture);
+                return ResourceManager.GetString("ReportIncidentHeaderCarousel", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Manage favorites.
+        ///   Looks up a localized string similar to Scope.
         /// </summary>
-        public static string ManageFavorites {
+        public static string Scope {
             get {
-                return ResourceManager.GetString("ManageFavorites", resourceCulture);
+                return ResourceManager.GetString("Scope", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Meeting created by Book-a-room bot..
+        ///   Looks up a localized string similar to Short description.
         /// </summary>
-        public static string MeetingBody {
+        public static string ShortDescription {
             get {
-                return ResourceManager.GetString("MeetingBody", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Room booked!.
-        /// </summary>
-        public static string MeetingBooked {
-            get {
-                return ResourceManager.GetString("MeetingBooked", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Meeting cancelled.
-        /// </summary>
-        public static string MeetingCancelled {
-            get {
-                return ResourceManager.GetString("MeetingCancelled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Meeting length.
-        /// </summary>
-        public static string MeetingLength {
-            get {
-                return ResourceManager.GetString("MeetingLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Room booked by Book-a-room bot..
-        /// </summary>
-        public static string MeetingSubject {
-            get {
-                return ResourceManager.GetString("MeetingSubject", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The meeting end time has elapsed..
-        /// </summary>
-        public static string MeetingTimeElapsed {
-            get {
-                return ResourceManager.GetString("MeetingTimeElapsed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to No favorite rooms yet. Add some for faster booking. Or, select more rooms to choose from the directory..
-        /// </summary>
-        public static string NoFavoriteRooms {
-            get {
-                return ResourceManager.GetString("NoFavoriteRooms", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to No favorite rooms yet..
-        /// </summary>
-        public static string NoFavoriteRoomsTaskModule {
-            get {
-                return ResourceManager.GetString("NoFavoriteRoomsTaskModule", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Add a room to your list of favorites to get started..
-        /// </summary>
-        public static string NoFavoritesDescriptionTaskModule {
-            get {
-                return ResourceManager.GetString("NoFavoritesDescriptionTaskModule", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to More rooms.
-        /// </summary>
-        public static string OtherRooms {
-            get {
-                return ResourceManager.GetString("OtherRooms", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Refresh.
-        /// </summary>
-        public static string Refresh {
-            get {
-                return ResourceManager.GetString("Refresh", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Room.
-        /// </summary>
-        public static string Room {
-            get {
-                return ResourceManager.GetString("Room", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Added room to favorites..
-        /// </summary>
-        public static string RoomAddedAsFavorite {
-            get {
-                return ResourceManager.GetString("RoomAddedAsFavorite", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Available rooms.
-        /// </summary>
-        public static string RoomAvailability {
-            get {
-                return ResourceManager.GetString("RoomAvailability", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0} has been booked successfully..
-        /// </summary>
-        public static string RoomBooked {
-            get {
-                return ResourceManager.GetString("RoomBooked", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to That room isn’t available. Select a different one..
-        /// </summary>
-        public static string RoomUnavailable {
-            get {
-                return ResourceManager.GetString("RoomUnavailable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Search.
-        /// </summary>
-        public static string SearchRoom {
-            get {
-                return ResourceManager.GetString("SearchRoom", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type a name or location.
-        /// </summary>
-        public static string SearchRoomDropdownPlaceholder {
-            get {
-                return ResourceManager.GetString("SearchRoomDropdownPlaceholder", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select meeting length and room..
-        /// </summary>
-        public static string SelectDurationRoom {
-            get {
-                return ResourceManager.GetString("SelectDurationRoom", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select room to add to your favorites..
-        /// </summary>
-        public static string SelectRoomToAdd {
-            get {
-                return ResourceManager.GetString("SelectRoomToAdd", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select time zone.
-        /// </summary>
-        public static string SelectTimezone {
-            get {
-                return ResourceManager.GetString("SelectTimezone", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Share.
-        /// </summary>
-        public static string Share {
-            get {
-                return ResourceManager.GetString("Share", resourceCulture);
+                return ResourceManager.GetString("ShortDescription", resourceCulture);
             }
         }
         
@@ -538,65 +260,92 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Time zone.
+        ///   Looks up a localized string similar to Take a Tour.
         /// </summary>
-        public static string Timezone {
+        public static string TakeTour {
             get {
-                return ResourceManager.GetString("Timezone", resourceCulture);
+                return ResourceManager.GetString("TakeTour", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The detected time zone is not supported. Please select a time zone to proceed..
+        ///   Looks up a localized string similar to Update workstream.
         /// </summary>
-        public static string TimezoneNotSupported {
+        public static string UpdateWorkstreamHeaderCarousel {
             get {
-                return ResourceManager.GetString("TimezoneNotSupported", resourceCulture);
+                return ResourceManager.GetString("UpdateWorkstreamHeaderCarousel", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to I couldn&apos;t add the room to your favorites. Try again later..
+        ///   Looks up a localized string similar to To create, view and add people in workstream.
         /// </summary>
-        public static string UnableToAddFavorite {
+        public static string UpdateWorkstreamTextCarousel {
             get {
-                return ResourceManager.GetString("UnableToAddFavorite", resourceCulture);
+                return ResourceManager.GetString("UpdateWorkstreamTextCarousel", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unavailable.
+        ///   Looks up a localized string similar to View incidents.
         /// </summary>
-        public static string Unavailable {
+        public static string ViewIncidents {
             get {
-                return ResourceManager.GetString("Unavailable", resourceCulture);
+                return ResourceManager.GetString("ViewIncidents", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to I help you to quickly book a room for your meeting on the go.
+        ///   Looks up a localized string similar to View workstreams.
         /// </summary>
-        public static string WelcomeCardContent {
+        public static string ViewWorkstreams {
             get {
-                return ResourceManager.GetString("WelcomeCardContent", resourceCulture);
+                return ResourceManager.GetString("ViewWorkstreams", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to **Book room** : Book your favorite room for a default duration of 30 mins.
+        ///   Looks up a localized string similar to I am on call assistant BOT that can help create, manage and resolve incidents..
         /// </summary>
-        public static string WelcomeCardContentPart1 {
+        public static string WelcomeCardTextLine1 {
             get {
-                return ResourceManager.GetString("WelcomeCardContentPart1", resourceCulture);
+                return ResourceManager.GetString("WelcomeCardTextLine1", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to **Manage favorites** : Add rooms as favorites to help you to quick book them later.
+        ///   Looks up a localized string similar to Here&apos;s what i can help with,.
         /// </summary>
-        public static string WelcomeCardContentPart2 {
+        public static string WelcomeCardTextLine2 {
             get {
-                return ResourceManager.GetString("WelcomeCardContentPart2", resourceCulture);
+                return ResourceManager.GetString("WelcomeCardTextLine2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create new incident.
+        /// </summary>
+        public static string WelcomeCardTextLine3 {
+            get {
+                return ResourceManager.GetString("WelcomeCardTextLine3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create, Edit and assign workstreams.
+        /// </summary>
+        public static string WelcomeCardTextLine4 {
+            get {
+                return ResourceManager.GetString("WelcomeCardTextLine4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolve or close incidents.
+        /// </summary>
+        public static string WelcomeCardTextLine5 {
+            get {
+                return ResourceManager.GetString("WelcomeCardTextLine5", resourceCulture);
             }
         }
         
@@ -606,6 +355,15 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         public static string WelcomeCardTitle {
             get {
                 return ResourceManager.GetString("WelcomeCardTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Welcome!.
+        /// </summary>
+        public static string WelcomeText {
+            get {
+                return ResourceManager.GetString("WelcomeText", resourceCulture);
             }
         }
     }

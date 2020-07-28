@@ -24,5 +24,10 @@ namespace Microsoft.Teams.Apps.Bart
         /// </summary>
         public static readonly string SearchUsersGraphURL = "/v1.0/users?$filter=startswith(displayName,'{0}')";
 
+        /// <summary>
+        /// Text for take a tour action.
+        /// </summary>
+        public static readonly string TakeATour = "take a tour";
+
     }
 }

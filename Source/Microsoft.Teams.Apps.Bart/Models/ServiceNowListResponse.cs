@@ -16,7 +16,7 @@ namespace Microsoft.Teams.Apps.Bart.Models
     public class ServiceNowListResponse
     {
         /// <summary>
-        /// Gets or sets incident details.
+        /// Gets or sets list of incident details.
         /// </summary>
         [JsonProperty("result")]
         public List<Incident> Incident { get; set; }

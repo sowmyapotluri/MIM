@@ -55,16 +55,16 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Add or update user configuration.
+        /// Add or update conference bridge details.
         /// </summary>
-        /// <param name="roomEntity">User configuration entity.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        public async Task<bool> AddAsync(ConferenceRoomEntity roomEntity)
+        /// <param name="conferenceRoom">Conference room entity.</param>
+        /// <returns>A task that represents status of execution.</returns>
+        public async Task<bool> AddAsync(ConferenceRoomEntity conferenceRoom)
         {
             try
             {
                 await this.EnsureInitializedAsync().ConfigureAwait(false);
-                TableOperation insertOrMergeOperation = TableOperation.InsertOrReplace(roomEntity);
+                TableOperation insertOrMergeOperation = TableOperation.InsertOrReplace(conferenceRoom);
                 TableResult result = await this.cloudTable.ExecuteAsync(insertOrMergeOperation).ConfigureAwait(false);
                 return result.Result != null;
             }
@@ -76,9 +76,9 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Get active statuses.
+        /// Get all conference bridge data.
         /// </summary>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <returns>A task that represents all conference bridge details.</returns>
         public async Task<List<ConferenceRoomEntity>> GetAsync()
         {
             try
@@ -99,10 +99,10 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Get user configuration.
+        /// Get conference bridge data.
         /// </summary>
-        /// <param name="bridge">Active Directory object Id of user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <param name="bridge">Unique bridge code.</param>
+        /// <returns>A task that represents corresponding conference bridge details.</returns>
         public async Task<ConferenceRoomEntity> GetAsync(string bridge)
         {
             try

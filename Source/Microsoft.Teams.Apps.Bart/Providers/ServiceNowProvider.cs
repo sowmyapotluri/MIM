@@ -35,7 +35,7 @@
         /// <summary>
         /// Search incidents URL.
         /// </summary>
-        private readonly string searchIncidents = "api/now/table/incident?sysparm_query=due_date{0}%5Edue_dateISNOTEMPTY%5Esys_created_by%3DSVC_teams_automation&sysparm_display_value=true&sysparm_fields=number%2Cshort_description%2Csys_created_on%2Cwork_notes%2Csys_id%2Cu_status%2Csys_updated_on%2Cdue_date%2Cu_current_activity&sysparm_limit=10";
+        private readonly string searchIncidents = "api/now/table/incident?sysparm_query=due_date{0}%5Edue_dateISNOTEMPTY%5Esys_created_by%3DSVC_teams_automation&sysparm_display_value=true&sysparm_fields=number%2Cshort_description%2Csys_created_on%2Cwork_notes%2Csys_id%2Cu_status%2Csys_updated_on%2Cdue_date%2Cu_current_activity%2Cstate&sysparm_limit=10";
 
         /// <summary>
         /// Get all incidents URL.

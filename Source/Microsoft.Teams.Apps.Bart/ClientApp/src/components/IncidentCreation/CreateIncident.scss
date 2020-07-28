@@ -8,23 +8,21 @@
     overflow-y: hidden;
     .formContainer {
         width: 100%;
-        padding-right: 0.8rem;
-        padding-left: 0.8rem;
-        padding-top: 0.8rem;
-        height: 95% !important;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        margin-top: 1rem!important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        
     }
 
     .footerContainer {
         position: absolute !important;
         bottom: 5px;
         left: 0;
-        padding-right: 0.8rem;
-        padding-left: 0.8rem;
+        padding-right: 2rem;
+        padding-left: 2rem;
         width: 100%;
-        padding-bottom: 0.8rem;
+        // padding-bottom: 2rem;
 
         .buttonContainer {
             display: inline;
@@ -33,8 +31,15 @@
     }
 }
 .emptyContent {
+    height: 50%;
+    padding-top: 15%;
     text-align: center;
 }
+
+.paddingForContent {
+  margin: auto;
+}
+
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
   margin-bottom: 0.5rem;
@@ -90,7 +95,7 @@ textarea.ui-textarea.inputField.textarea {
     font-size: small;
 }
 .inputField > .ui-input__input {
-    height: 35px;
+    // height: 35px;
 }
 .xs-small-input{width: auto;}
 .xs-small-input .ui-dropdown__container {

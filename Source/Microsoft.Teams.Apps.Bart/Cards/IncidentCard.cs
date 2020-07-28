@@ -13,6 +13,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
     using Microsoft.CodeAnalysis.CSharp.Syntax;
     using Microsoft.EntityFrameworkCore.Migrations;
     using Microsoft.Teams.Apps.Bart.Models;
+    using Microsoft.Teams.Apps.Bart.Models.Enum;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
     using Microsoft.Teams.Apps.Bart.Resources;
     using Newtonsoft.Json;
@@ -69,6 +70,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                             },
                             new AdaptiveColumn
                             {
+                                Width = "auto",
                                 Items = new List<AdaptiveElement>
                                 {
                                     new AdaptiveActionSet
@@ -92,16 +94,21 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                             },
                         },
             };
+            var scopeColumnSet = new AdaptiveColumnSet();
+            var bridgeColumnSet = new AdaptiveColumnSet();
+
             if (footer || this.incident.Status != "1")
             {
-                string footerMessage = this.incident.Status == "2" ? "suspended" : "service restored";
+                string footerMessage = title != "New Incident reported" ? "closed" : this.incident.Status == "2" ? "suspended" : "service restored";
                 footerContainer = new AdaptiveContainer
                 {
                     Style = AdaptiveContainerStyle.Attention,
+                    Bleed = true,
                     Items = new List<AdaptiveElement>
                     {
                         new AdaptiveTextBlock
                         {
+                            Weight = AdaptiveTextWeight.Bolder,
                             Text = $"* Please do not respond to this incident, as it is {footerMessage}",
                             Wrap = true,
                         },
@@ -111,13 +118,85 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                 activityColumnSet = new AdaptiveColumnSet();
             }
 
+            if (!string.IsNullOrEmpty(this.incident.Scope))
+            {
+                scopeColumnSet = new AdaptiveColumnSet
+                {
+                    Spacing = AdaptiveSpacing.Medium,
+                    Columns = new List<AdaptiveColumn> {
+                            new AdaptiveColumn
+                            {
+                                Width = "150px",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = Strings.Scope,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                    },
+                                },
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = "stretch",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = this.incident.Scope,
+                                        Wrap = true,
+                                        Spacing = AdaptiveSpacing.None,
+                                    },
+                                },
+                            },
+                        },
+                };
+            }
+
+            if (this.incident.BridgeDetails.Code != null && this.incident.BridgeDetails.Code != "0")
+            {
+                bridgeColumnSet = new AdaptiveColumnSet
+                {
+                    Spacing = AdaptiveSpacing.Medium,
+                    Columns = new List<AdaptiveColumn> {
+                            new AdaptiveColumn
+                            {
+                                Width = "150px",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = Strings.Bridge,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                        Wrap = true,
+                                    },
+                                },
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = "stretch",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = string.Format("[{0}]({1})", this.incident.BridgeDetails.Code, this.incident.BridgeDetails.BridgeURL),
+                                        Wrap = true,
+                                        Spacing = AdaptiveSpacing.None,
+                                    },
+                                },
+                            },
+                        },
+                };
+            }
+
             AdaptiveCard card = new AdaptiveCard("1.2")
             {
                 Body = new List<AdaptiveElement>
                 {
                     new AdaptiveContainer
                     {
-                        Style = AdaptiveContainerStyle.Emphasis,
+                        Style = title == "New Incident reported" ? AdaptiveContainerStyle.Warning : AdaptiveContainerStyle.Good,
+                        Bleed = true,
                         Items = new List<AdaptiveElement>
                         {
                             new AdaptiveColumnSet
@@ -146,9 +225,9 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                            {
                                                Weight = AdaptiveTextWeight.Bolder,
                                                Size = AdaptiveTextSize.Medium,
-                                               Color = this.incident.Priority == "7" ? AdaptiveTextColor.Attention: AdaptiveTextColor.Default,
+                                               Color = this.incident.Priority == "7" ? AdaptiveTextColor.Attention : AdaptiveTextColor.Default,
                                                HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                               Text = this.incident.Priority == "7" ? "High Priority!" : " ",
+                                               Text = string.Format("{0} Priority!", Enum.GetName(typeof(Priority), Convert.ToInt32(this.incident.Priority))),
                                            },
                                        },
                                    },
@@ -190,15 +269,100 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                             },
                         },
                     },
-                    new AdaptiveFactSet
+                    new AdaptiveColumnSet {
+                        Columns = new List<AdaptiveColumn> {
+                            new AdaptiveColumn
+                            {
+                                Width = "150px",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = Strings.CreatedOn,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                    },
+                                },
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = "stretch",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = this.incident.CreatedOn,
+                                        Wrap = true,
+                                        Spacing = AdaptiveSpacing.None,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    scopeColumnSet,
+                    new AdaptiveColumnSet
                     {
-                        Facts = BuildFactSet(this.incident, true),
+                        Spacing = AdaptiveSpacing.Medium,
+                        Columns = new List<AdaptiveColumn> {
+                            new AdaptiveColumn
+                            {
+                                Width = "150px",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = Strings.Description,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                    },
+                                },
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = "stretch",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = this.incident.Description,
+                                        Wrap = true,
+                                        Spacing = AdaptiveSpacing.None,
+                                    },
+                                },
+                            },
+                        },
                     },
                     activityColumnSet,
-                    new AdaptiveFactSet
+                    new AdaptiveColumnSet
                     {
-                        Facts = BuildFactSet(this.incident, false),
+                        Spacing = AdaptiveSpacing.Medium,
+                        Columns = new List<AdaptiveColumn> {
+                            new AdaptiveColumn
+                            {
+                                Width = "150px",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = Strings.ShortDescription,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                    },
+                                },
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = "stretch",
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = this.incident.Short_Description,
+                                        Wrap = true,
+                                        Spacing = AdaptiveSpacing.None,
+                                    },
+                                },
+                            },
+                        },
                     },
+                    bridgeColumnSet,
                     footerContainer,
                 },
                 Actions = !footer ? this.BuildActions(): new List<AdaptiveAction>(),
@@ -222,10 +386,10 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                 {
                     new AdaptiveSubmitAction
                     {
-                        Title = "View workstream",
+                        Title = "View workstreams",
                         Data = new AdaptiveSubmitActionData
                         {
-                            Msteams = new TaskModuleAction(Strings.OtherRooms, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.EditWorkstream, ActivityReferenceId = this.incident.Id, ActivityReferenceNumber = this.incident.Number }) }),
+                            Msteams = new TaskModuleAction(Strings.ViewWorkstreams, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.EditWorkstream, ActivityReferenceId = this.incident.Id, ActivityReferenceNumber = this.incident.Number }) }),
                         },
                     },
                     new AdaptiveShowCardAction
@@ -285,11 +449,15 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     Title = "Created On",
                     Value = incident.CreatedOn,
                 });
-                //factList.Add(new AdaptiveFact
-                //{
-                //    Title = "Scope",
-                //    Value = incident.CreatedOn,
-                //});
+                if (!string.IsNullOrEmpty(incident.Scope))
+                {
+                    factList.Add(new AdaptiveFact
+                    {
+                        Title = "Scope",
+                        Value = incident.Scope,
+                    });
+                }
+
                 factList.Add(new AdaptiveFact
                 {
                     Title = "Description",
@@ -332,11 +500,11 @@ namespace Microsoft.Teams.Apps.Bart.Cards
             choiceSet.Value = incident.Status;
             choiceSet.Choices = new List<AdaptiveChoice>
                     {
-                        new AdaptiveChoice
-                        {
-                            Title = "New",
-                            Value = ChangeTicketStatusPayload.NewAction,
-                        },
+                        //new AdaptiveChoice
+                        //{
+                        //    Title = "New",
+                        //    Value = ChangeTicketStatusPayload.NewAction,
+                        //},
                         new AdaptiveChoice
                         {
                             Title = "Suspended",
@@ -365,14 +533,14 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                 Style = AdaptiveChoiceInputStyle.Compact,
             };
 
-            choiceSet.Value = ChangeTicketStatusPayload.NewAction;
+            choiceSet.Value = "Incident Closed";
             choiceSet.Choices = new List<AdaptiveChoice>
                     {
-                        new AdaptiveChoice
-                        {
-                            Title = "Incident New",
-                            Value = "Incident New",
-                        },
+                        //new AdaptiveChoice
+                        //{
+                        //    Title = "Incident New",
+                        //    Value = "Incident New",
+                        //},
                         new AdaptiveChoice
                         {
                             Title = "Incident Closed",

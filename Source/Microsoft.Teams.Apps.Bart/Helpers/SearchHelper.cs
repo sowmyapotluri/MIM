@@ -146,17 +146,10 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
                         Title = incident.Number,
                         Text = GetPreviewCardText(incident, commandId, localTimestamp),
                     };
-                    //var incidentObject = new Incident
-                    //{
-                    //    BridgeDetails = new ConferenceRoomEntity
-                    //    {
-                    //        BridgeURL = incident.BridgeLink,
-                    //        Code = incident.BridgeId,
-                    //    },
-                    //    Description = incident.Description,
-                    //    Short_Description = incident.ShortDescription,
-                    //    CreatedOn = incident.Timestamp.ToString(),
-                    //};
+
+                    incident.Priority = incidentDetails.Priority;
+                    incident.Scope = incidentDetails.Scope;
+                    incident.State = incidentDetails.Status;
                     var selectedTicketAdaptiveCard = new MessagingExtenstionCard(incidentDetails, incident);
                     composeExtensionResult.Attachments.Add(selectedTicketAdaptiveCard.GetIncidentAttachment(incidentDetails).ToMessagingExtensionAttachment(previewCard.ToAttachment()));
                 }

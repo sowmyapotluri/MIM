@@ -9,23 +9,24 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
 
     /// <summary>
-    /// Storage provider for fetch, insert and update operation on UserConfiguration table.
+    /// Storage provider for fetch, insert and update operation on Incidents table.
     /// </summary>
     public interface IIncidentStorageProvider
     {
         /// <summary>
-        /// Add or update user configuration.
+        /// Add or update incidents.
         /// </summary>
-        /// <param name="incidentEntity">User configuration entity.</param>
+        /// <param name="incidentEntity">Incident entity.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         Task<bool> AddAsync(IncidentEntity incidentEntity);
 
         /// <summary>
-        /// Get user configuration.
+        /// Get incident.
         /// </summary>
-        /// <param name="incidentNumber">Active Directory object Id of user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        Task<IncidentEntity> GetAsync(string partitionKey, string rowKey);
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <param name="incidentId">Incident id.</param>
+        /// <returns>A task that represents the corresponding incident entity.</returns>
+        Task<IncidentEntity> GetAsync(string incidentNumber, string incidentId);
 
         /// <summary>
         /// Get incidents.
@@ -35,10 +36,10 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         Task<List<IncidentEntity>> GetIncidentsAsync(string condition);
 
         /// <summary>
-        /// Get user configuration.
+        /// Get incident based on incident number.
         /// </summary>
-        /// <param name="partitionKey">Active Directory object Id of user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        Task<IncidentEntity> GetAsync(string partitionKey);
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <returns>A task that represents corresponding incident.</returns>
+        Task<IncidentEntity> GetAsync(string incidentNumber);
     }
 }

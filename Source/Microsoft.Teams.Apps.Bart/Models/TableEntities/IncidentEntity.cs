@@ -50,12 +50,12 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         /// <summary>
         /// Gets or sets created on date.
         /// </summary>
-        public string CreatedOn { get; set; }
+        //public string CreatedOn { get; set; }
 
         /// <summary>
         /// Gets or sets updated on date.
         /// </summary>
-        public string UpdatedOn { get; set; }
+        //public string UpdatedOn { get; set; }
 
         /// <summary>
         /// Gets or sets prioriy of the ticket.
@@ -85,12 +85,12 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         /// <summary>
         /// Gets or sets description of the incident.
         /// </summary>
-        public string Description { get; set; }
+        //public string Description { get; set; }
 
         /// <summary>
         /// Gets or sets short description of the incident.
         /// </summary>
-        public string ShortDescription { get; set; }
+        //public string ShortDescription { get; set; }
 
         /// <summary>
         /// Gets or sets scope of the incident.
@@ -135,7 +135,7 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         /// <summary>
         /// Gets or sets incident current activity.
         /// </summary>
-        public string CurrentActivity { get; set; }
+        //public string CurrentActivity { get; set; }
 
     }
 }

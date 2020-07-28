@@ -28,54 +28,80 @@ namespace Microsoft.Teams.Apps.Bart.Cards
             {
                 Body = new List<AdaptiveElement>
                 {
-                    //new AdaptiveColumnSet
-                    //{
-                    //    Columns = new List<AdaptiveColumn>
-                    //    {
+                    new AdaptiveColumnSet
+                    {
+                        Columns = new List<AdaptiveColumn>
+                        {
 
-                    //        new AdaptiveColumn
-                    //        {
-                    //            Width = AdaptiveColumnWidth.Auto,
-                    //            Items = new List<AdaptiveElement>
-                    //            {
-                    //                //new AdaptiveTextBlock
-                                    //{
-                                    //    Size = AdaptiveTextSize.Large,
-                                    //    Wrap = true,
-                                    //    Text = Strings.WelcomeCardTitle,
-                                    //    Weight = AdaptiveTextWeight.Bolder,
-                                    //},
-                                    //new AdaptiveTextBlock
-                                    //{
-                                    //    Size = AdaptiveTextSize.Default,
-                                    //    Wrap = true,
-                                    //    Text = Strings.WelcomeCardContent,
-                                    //},
-                    //            },
-                    //        },
-                    //    },
-                    //},
-                    //new AdaptiveTextBlock
-                    //{
-                    //    HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
-                    //    Text = Strings.WelcomeCardContentPart1,
-                    //    Wrap = true,
-                    //},
-                    //new AdaptiveTextBlock
-                    //{
-                    //    HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
-                    //    Text = Strings.WelcomeCardContentPart2,
-                    //    Wrap = true,
-                    //},
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Auto,
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Size = AdaptiveTextSize.Large,
+                                        Text = Strings.WelcomeText,
+                                        Wrap = true,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                    },
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = Strings.WelcomeCardTextLine1,
+                                        Wrap = true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+
+                    new AdaptiveTextBlock
+                    {
+                        HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
+                        Text = Strings.WelcomeCardTextLine2,
+                        Wrap = true,
+                    },
+                    new AdaptiveTextBlock
+                    {
+                        HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
+                        Text = Strings.WelcomeCardTextLine3,
+                        Wrap = true,
+                    },
+                    new AdaptiveTextBlock
+                    {
+                        HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
+                        Text = Strings.WelcomeCardTextLine4,
+                        Wrap = true,
+                    },
+                    new AdaptiveTextBlock
+                    {
+                        HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
+                        Text = Strings.WelcomeCardTextLine5,
+                        Wrap = true,
+                    },
                 },
                 Actions = new List<AdaptiveAction>
                 {
                     new AdaptiveSubmitAction
                     {
-                        Title = "Create Incident",
+                        Title = Strings.CreateIncident,
                         Data = new AdaptiveSubmitActionData
                         {
-                            Msteams = new TaskModuleAction(Strings.OtherRooms, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.CreateIncident }) }),
+                            Msteams = new TaskModuleAction(Strings.CreateIncident, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = BotCommands.CreateIncident }) }),
+                        },
+                    },
+                    new AdaptiveSubmitAction
+                    {
+                        Title = Strings.TakeTour,
+                        Data = new TeamsAdaptiveSubmitActionData
+                        {
+                            MsTeams = new CardAction
+                            {
+                              Type = ActionTypes.MessageBack,
+                              Title = Strings.TakeTour,
+                              DisplayText = Strings.TakeTour,
+                              Text = BotCommands.TakeTour,
+                            },
                         },
                     },
                 },

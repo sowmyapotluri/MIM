@@ -27,7 +27,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// Update new incident.
         /// </summary>
         /// <param name="incident"><see cref="Incident"/> object. </param>
-        /// <param name="token">Active Directory access token.</param>
+        /// <param name="token">ServiceNow token.</param>
         /// <returns>Event response object.</returns>
         Task<dynamic> UpdateIncidentAsync(Incident incident, string token);
 
@@ -42,7 +42,8 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// <summary>
         /// Get incidents based on factors.
         /// </summary>
-        /// <param name="commandId">Query for searching. </param>
+        /// <param name="commandId">Bot command for searching. </param>
+        /// <param name="searchQuery">Query for searching. </param>
         /// <param name="token">Active Directory access token.</param>
         /// <returns>Event response object.</returns>
         Task<dynamic> GetIncidentAsync(string commandId, string searchQuery, string token);

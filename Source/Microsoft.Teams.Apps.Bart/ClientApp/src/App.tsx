@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import './App.scss';
-import { Provider, themes } from '@stardust-ui/react';
+import { Provider, themes } from '@fluentui/react';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { TeamsThemeContext, getContext, ThemeStyle } from 'msteams-ui-components-react';
 import ErrorPage from "./components/ErrorPage/errorPage";

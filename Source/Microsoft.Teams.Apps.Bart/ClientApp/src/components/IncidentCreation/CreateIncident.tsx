@@ -2,18 +2,19 @@
 import * as microsoftTeams from "@microsoft/teams-js";
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, TextArea } from '@fluentui/react';
+
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { AddIcon } from '@fluentui/react-icons-northstar'
 import "./CreateIncident.scss";
 import "./bootstrap-grid.css";
 import { isNullOrUndefined } from 'util';
 import { ApplicationInsights, SeverityLevel } from '@microsoft/applicationinsights-web';
-import { ReactPlugin} from '@microsoft/applicationinsights-react-js';
+import { ReactPlugin } from '@microsoft/applicationinsights-react-js';
 import { createBrowserHistory } from "history";
 let reactPlugin = new ReactPlugin();
 const browserHistory = createBrowserHistory({ basename: '' });
 
 export interface ICreateIncidentProps {
-
 }
 
 export interface ICreateIncidentState {
@@ -27,14 +28,15 @@ export interface ICreateIncidentState {
     workstreams: IWorkstream[],
     allBridges: IConferenceRooms[],
     selectedBridge: IConferenceRooms,
-    users: IUser[]
+    users: IUser[],
+    loaderText: string
 }
 
 export interface IWorkstream {
     priority: number,
     description: string,
     assignedTo: string,
-    completed: boolean,
+    status: boolean,
     assignedToId: string,
     inActive: boolean,
     new: boolean
@@ -65,14 +67,14 @@ export interface IIncident {
     sys_id: string,
     sys_updated_on: string,
     bridgeDetails: IConferenceRooms,
+    scope: string
 }
 
-export const Priority = {
-    Low: 1,
-    Normal: 2,
-    High: 3
+enum Priority {
+    Low = 1,
+    Normal = 2,
+    High = 7
 }
-const todayDate: Date = new Date();
 
 export default class CreateIncident extends React.Component<ICreateIncidentProps, ICreateIncidentState> {
 
@@ -80,7 +82,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     private description = "";
     private scope = "";
     private status = "";
-    private priority = 0;
+    private incidentPriority: number = 0;
     private list: number[] = [];
     token?: string | null = null;
     telemetry: any = undefined;
@@ -110,14 +112,14 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             priority: 1,
             description: "",
             assignedTo: "",
-            completed: false,
+            status: false,
             assignedToId: "",
             inActive: false,
             new: true
         }
         this.state = {
             id: "",
-            shortDescription: "",
+            shortDescription: this.fetchedDescription !== null && this.fetchedDescription.length < 250 ? this.fetchedDescription : "",
             description: this.fetchedDescription !== null ? this.fetchedDescription : "",
             scope: "",
             loader: false,
@@ -131,13 +133,14 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 code: 0,
                 bridgeURL: ""
             },
-            users: []
+            users: [],
+            loaderText: "Please wait..."
         }
-        this.shortDescription = "";
+        this.shortDescription = this.fetchedDescription !== null && this.fetchedDescription.length < 250 ? this.fetchedDescription : "";
         this.description = this.fetchedDescription !== null ? this.fetchedDescription : "";
         this.scope = "";
         this.status = "";
-        this.priority = 0;
+        this.incidentPriority = 0;
         this.list = [1];
         // this.appInsights = new ApplicationInsights({
         //     config: {
@@ -163,7 +166,6 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         document.removeEventListener("keydown", this.escFunction, false);
         this.getAvailableBridges();
     }
-
 
     public componentWillUnmount = () => {
         document.removeEventListener("keydown", this.escFunction, false);
@@ -209,7 +211,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 this.setState({
                     loader: false,
                     allBridges: bridges,
-                    selectedBridge: bridges.find((bridge) => bridge.code.toString() === "0")!
+                    selectedBridge: bridges.find((bridge) => bridge.code.toString() === "0")!,
+                    users: [this.requestedBy!]
                 }, () => {
                     console.log("=>", this.state.allBridges)
                 });
@@ -231,11 +234,17 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     private onShortDescriptionChange = (e: React.SyntheticEvent<HTMLElement, Event>) => {
         console.log("SD", (e.target as HTMLInputElement).value)
         this.shortDescription = (e.target as HTMLInputElement).value;
+        this.setState({
+            shortDescription: this.shortDescription
+        });
     }
 
     private onDescriptionChange = (e: React.SyntheticEvent<HTMLElement, Event>) => {
         console.log("D", (e.target as HTMLInputElement).value)
         this.description = (e.target as HTMLInputElement).value;
+        this.setState({
+            description : this.description
+        });
     }
 
     private onScopeChange = (e: React.SyntheticEvent<HTMLElement, Event>) => {
@@ -243,19 +252,24 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     }
 
     private onPriorityChange = (e: React.SyntheticEvent<HTMLElement, Event>, dropdownProps?: DropdownProps) => {
-        console.log("Priority", Object.keys(Priority).map(key => { if (key === "Low") return Priority[key] })[0]!)
-        // let priorityChoice: string = (String)(dropdownProps!.value!);
-        // // const keys = Object.keys(Priority) as (keyof (Priority)[];
-        // this.priority = Object.keys(Priority).map(key => 
-        //     {
-        //         if(key === priorityChoice) 
-        //         return Priority[key];
-        //     })[0]!;
+        console.log("Priority", (Number)(Object.values(Priority).find((key: any) => Priority[key] === dropdownProps!.value!)))
+        this.incidentPriority = (Number)(Object.values(Priority).find((key: any) => Priority[key] === dropdownProps!.value!));
+        this.setState({
+            
+        });
     }
 
-    // private onStatusChange = (e: React.SyntheticEvent<HTMLElement, Event>) =>{
-    //     this.shortDescription = (e.target as HTMLInputElement).value;
-    // }
+    private onWorkstreamStatusChange = (e: React.SyntheticEvent<HTMLElement, Event>, dropdownProps?: DropdownProps) => {
+        let selectedValue = dropdownProps!.value!;
+        let index = dropdownProps! as { id: number }
+        console.log("Users chanegs", selectedValue, dropdownProps!)
+        var workstream = this.state.workstreams;
+        workstream[index.id].status = selectedValue.toString().toLowerCase() === "completed" ? true : false;
+
+        this.setState({
+            workstreams: workstream
+        });
+    }
 
     private getUsers = (e: React.SyntheticEvent<HTMLElement, Event>, data?: DropdownProps) => {
         var searchQuery = data!.searchQuery!
@@ -353,20 +367,21 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     private createIncident = async () => {
         console.log("CreateIncident", this.description);
         this.setState({
+            loaderText: "Please wait while your incident is created in ServiceNow...",
             loader: true
         });
         let event = {
             Incident: {
                 Short_Description: this.shortDescription,
                 Description: this.description,
-                Priority: 7,
+                Priority: this.incidentPriority,
                 Bridge: this.state.selectedBridge.code,
                 bridgeDetails: this.state.selectedBridge,
                 Scope: this.scope,
                 RequestedBy: this.requestedBy!.displayName!,
                 RequestedById: this.requestedBy!.id!,
-                RequestedFor: isNullOrUndefined(this.requestedFor)?this.requestedBy!.displayName!:this.requestedFor!.displayName!,
-                RequestedForId: isNullOrUndefined(this.requestedFor)?this.requestedBy!.id!:this.requestedFor!.id!,
+                RequestedFor: isNullOrUndefined(this.requestedFor) ? this.requestedBy!.displayName! : this.requestedFor!.displayName!,
+                RequestedForId: isNullOrUndefined(this.requestedFor) ? this.requestedBy!.id! : this.requestedFor!.id!,
             },
             Workstreams: this.state.workstreams
         };
@@ -401,6 +416,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 let toBot: IIncident = response;
                 toBot.bridge = this.state.selectedBridge.code.toString();
                 toBot.bridgeDetails = this.state.selectedBridge;
+                toBot.scope = this.scope;
+                toBot.priority = this.incidentPriority.toString();
                 microsoftTeams.tasks.submitTask(toBot);
                 // });
             }
@@ -417,7 +434,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             priority: this.state.workstreams.length + 1,
             description: "",
             assignedTo: "",
-            completed: false,
+            status: false,
             assignedToId: "",
             inActive: false,
             new: true
@@ -436,14 +453,6 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     private onWorkstreamDescriptionChange = (e: React.SyntheticEvent<HTMLElement, Event>, index: number) => {
         let workstreams = this.state.workstreams;
         workstreams[index].description = (e.target as HTMLInputElement).value;
-        this.setState({
-            workstreams: workstreams
-        })
-    }
-
-    private onWorkstreamAssigneeChange = (e: React.SyntheticEvent<HTMLElement, Event>, index: number) => {
-        let workstreams = this.state.workstreams;
-        workstreams[index].assignedTo = (e.target as HTMLInputElement).value;
         this.setState({
             workstreams: workstreams
         })
@@ -473,9 +482,8 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
 
     public render(): JSX.Element {
         const inputItems = [
-            'New',
-            'Suspended',
-            'Service Restored'
+            'Active',
+            'Completed'
         ];
 
         const userInput = this.state.users.map((user) => {
@@ -486,7 +494,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             });
         });
 
-        console.log("User", userInput)
+        console.log("User", userInput[userInput.findIndex((user=> user.content === this.requestedBy!.userPrincipalName))], userInput.findIndex((user=> user.content === this.requestedBy!.userPrincipalName)))
 
         let workstreamBlock: JSX.Element[] = (this.state.workstreams.map((workstream: IWorkstream, index: number) => {
             console.log("Refresh!", this.state.workstreams[index].description, workstream.description)
@@ -525,17 +533,17 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                         <div className="col-md-2 pl-1">
                             <Dropdown
                                 className="md-input"
-                                search
                                 items={inputItems}
-                                placeholder="Type Text"
+                                id={index.toString()}
                                 noResultsMessage="We couldn't find any matches."
+                                onSelectedChange={this.onWorkstreamStatusChange}
                             />
                         </div>
                     </div>
                     <div hidden={index !== this.state.workstreams.length - 1}>
                         <Flex gap="gap.smaller">
                             <Icon iconName="add" className="pos-rel ft-18 ft-bld icon-sm" />
-                            <Button text content="Add another workstream" onClick={this.addWorkstreams}
+                            <Button text icon={<FluentIcon name="add"/>} content={"Add another workstream"} onClick={this.addWorkstreams}
                                 disabled={this.state.workstreams[this.state.workstreams.length - 1].description === ""
                                     && this.state.workstreams[this.state.workstreams.length - 1].assignedTo === ""} />
                         </Flex>
@@ -551,11 +559,13 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             return (
                 <div className="emptyContent">
                     <Loader />
+                    <Text content = {this.state.loaderText} size = "small"/>
                 </div>
             );
         }
         else {
             return (
+                <div className="">
                 <div className="taskModule">
                     <div className="formContainer">
                         <div className="row">
@@ -577,20 +587,20 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         items={userInput}
                                         placeholder="Start typing a name"
                                         onSelectedChange={this.requestedAssigned}
-                                        value={[{
-                                            header: this.requestedBy!.displayName,
-                                            content: this.requestedBy!.userPrincipalName
-                                        }]}
+                                        defaultSearchQuery={this.requestedBy!.displayName}
                                     />
                                 </div>
                             </div>
-                            <div className="row my-3">
+                            <div className="row">
                                 <div className="col-md-8">
                                     <Flex gap="gap.smaller">
                                         <Text content="Short description(Note: max 250 characters)" />
                                     </Flex>
                                     <Flex gap="gap.smaller">
                                         <Input fluid className="inputField" defaultValue={this.shortDescription} placeholder="Short description" name="shortDescriptionTitle" onChange={this.onShortDescriptionChange} />
+                                    </Flex>
+                                    <Flex gap="gap.smaller">
+                                        <Text className="fontItalic" hidden={!(this.state.shortDescription.length > 250)} content="Short description should be less than 250 characters" size="small" error />
                                     </Flex>
                                 </div>
                                 <div className="col-md-4">
@@ -603,7 +613,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                     </Flex>
                                 </div>
                             </div>
-                            <div className="row my-3">
+                            <div className="row paddingForContent">
                                 <div className="col-md-8">
                                     <Flex gap="gap.smaller" column>
                                         <Text content="Description of the reported problem" />
@@ -626,7 +636,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         <Text content="Priority" />
                                         <Dropdown
                                             className="select-wrapper"
-                                            items={Object.keys(Priority)}
+                                            items={Object.keys(Priority).filter(x => !(parseInt(x) >= 0))}
                                             placeholder="Select priority"
                                             noResultsMessage="We couldn't find any matches."
                                             onSelectedChange={this.onPriorityChange}
@@ -668,12 +678,20 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                         <div className="footerContainer">
                             <div className="buttonContainer">
                                 <Flex gap="gap.small">
-                                    <Button content="Submit" primary className="bottomButton" onClick={this.createIncident} />
+                                    <FlexItem grow>
+                                        <Text content=""/>
+                                    </FlexItem>
+                                    <FlexItem push>
+                                        <Button content="Submit" primary className="bottomButton" onClick={this.createIncident} 
+                                        disabled = {this.shortDescription === "" || this.description === "" || this.incidentPriority == 0 }
+                                        />
+                                    </FlexItem>
                                 </Flex>
                             </div>
                         </div>
                     </div>
                 </div >
+                </div>
             );
         }
     }

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
-import { Input, Loader, Button, Flex, FlexItem, Text, Icon, Dropdown, Checkbox, Accordion, Avatar, Segment } from '@fluentui/react';
+import { Input, Loader, Button, Flex, FlexItem, Text, Icon, Dropdown, Checkbox, Accordion, Segment, Header, Avatar } from '@fluentui/react';
+// import { Avatar } from '@fluentui/react-northstar';
 import { SearchIcon, FilesImageIcon } from '@fluentui/react-icons-northstar';
 import { DatePicker, DayOfWeek, IDatePickerStrings } from 'office-ui-fabric-react/lib/DatePicker';
 import { Guid } from "guid-typescript";
@@ -50,7 +51,8 @@ export interface IIncidentEntity {
     assignedTo: IUser,
     bridgeId: number,
     bridgeLink: string,
-    requestedBy: IUser
+    requestedBy: IUser,
+    state: string
 }
 
 export interface IUser {
@@ -119,7 +121,8 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                         teamsUserId: "",
                         serviceUrl: "",
                         profilePicture: ""
-                    }
+                    },
+                    state: ""
                 }
             ],
             restoredIncidents: [],
@@ -165,9 +168,9 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
 
     private getIncidents123 = async () => {
 
-        // this.setState({
-        //     loader: true
-        // });
+        this.setState({
+            loader: true
+        });
 
         // getIncidents(moment().format("YYYY/MM/DD"))
         await fetch("/api/IncidentApi/GetAllIncidents?weekDay=" + moment().format("YYYY/MM/DD"), {
@@ -232,7 +235,8 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                                 serviceUrl: "",
                                 teamsUserId: "",
                                 userPrincipalName: ""
-                            }
+                            },
+                            state: response[i].State,
                         }
                         incidents.push(incident);
                     }
@@ -269,7 +273,6 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
     private deeplinkToThread = (link: string) => {
         console.log("link",link)
         microsoftTeams.executeDeepLink(link);
-        // microsoftTeams.tasks.submitTask({"deeplinkExecuted":"success"});
     }
 
     private renderBody = (incidents: IIncidentEntity[]) => {
@@ -339,22 +342,22 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                         <Text key={"description" + index} content={incident.shortDescription} />
                     </td>
                     <td>
-                        <Text key={"brideId" + index} content={incident.bridgeId} color="brand" weight="semibold" />
+                        <Text key={"brideId" + index} content={incident.bridgeId}  weight="semibold" />
                     </td>
                     <td>
-                        <Text key={"state" + index} content={incident.status} color="brand" weight="semibold" />
+                        <Text key={"state" + index} content={incident.state}  weight="semibold" />
                     </td>
                     <td>
-                        <Text key={"createdOn" + index} content={incident.createdOn} color="brand" weight="semibold" />
+                        <Text key={"createdOn" + index} content={incident.createdOn}  weight="semibold" />
                     </td>
                     <td>
-                        <Text key={"updatedOn" + index} content={incident.updatedOn} color="brand" weight="semibold" />
+                        <Text key={"updatedOn" + index} content={incident.updatedOn}  weight="semibold" />
                     </td>
                     <td>
                         <div onClick={()=>this.deeplinkToThread(incident.linkToThread)}>
                             <Flex gap="gap.small">
                                 <FlexItem push>
-                                <Avatar image={`data:image/jpeg;base64,${incident.assignedTo.profilePicture}`} />
+                                <Avatar size="small" image={"https://homedepotbart.azurewebsites.net/color.png"}/>
                                 </FlexItem>
                                 <FlexItem grow>
                                     <Text className="userPadding" content={"BART"} />
@@ -374,11 +377,11 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                 </tr>
             );
             rows.push(
-                <tr hidden={!(this.state.selectedIncident === incident.id)}>
+                <tr hidden={!(this.state.selectedIncident === incident.id)} id="hiddenRow">
                     <td>
                         <Text weight="semibold" content="Requested By" />
                     </td>
-                    <td colSpan={2}>
+                    <td colSpan={1}>
                         {requestedUser}
                     </td>
                     <td>
@@ -387,7 +390,7 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                     <td colSpan={2}>
                         {assignTo}
                     </td>
-                    <td>
+                    <td colSpan={2}>
                         <Text weight="semibold" content={"Current Activity: " + incident.currentActivity} />
                     </td>
                 </tr>
@@ -479,10 +482,10 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                     <div className="formContainer ">
                         <Flex>
                             <FlexItem>
-                                <Text size="largest" content="Due this week" />
+                                <Header content="Due this week" />
                             </FlexItem>
                             <FlexItem push>
-                                <Input icon={<SearchIcon />} placeholder="Search" onChange={this.searchIncidents} />
+                                <Input icon={<SearchIcon />} placeholder="Search by description" onChange={this.searchIncidents} />
                             </FlexItem>
                         </Flex>
                         <Accordion panels={panels} exclusive />

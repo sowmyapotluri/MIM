@@ -132,6 +132,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                     List<string> workstreamString = new List<string>();
                     var incidentTableData = await this.incidentStorageProvider.GetAsync(workstreams.FirstOrDefault().PartitionKey).ConfigureAwait(false);
                     Incident incident = await this.serviceNowProvider.GetIncidentAsync(incidentTableData.RowKey, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    incident.Status = incidentTableData.Status;
                     incident.BridgeDetails = new ConferenceRoomEntity
                     {
                         Code = incidentTableData.BridgeId,

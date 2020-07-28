@@ -31,8 +31,14 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// <summary>
         /// Gets or sets status.
         /// </summary>
-        [JsonProperty("state")]
+        [JsonProperty("u_status")]
         public string Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets state.
+        /// </summary>
+        [JsonProperty("state")]
+        public string State { get; set; }
 
         /// <summary>
         /// Gets or sets priority.

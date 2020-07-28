@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, CheckboxProps } from '@fluentui/react';
+
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Guid } from "guid-typescript";
 import "./EditWorkstream.scss";
@@ -140,14 +141,15 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
 
     };
 
-    public componentDidMount = () => {
+    public componentDidMount = async () => {
         microsoftTeams.initialize();
         microsoftTeams.getContext((context) => {
             console.log("microsoft teams", context)
         });
         document.removeEventListener("keydown", this.escFunction, false);
-        this.getAssignees();
-        this.getWorkstreams();
+        await this.getWorkstreams();
+        await this.getAssignees();
+
     }
 
     public componentWillUnmount = () => {
@@ -202,7 +204,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                 this.workstream.partitionKey = this.incidentNumber!
                 this.setState({
                     workstreams: [...orderBy(allWorkstreams, [items => items.priority]), this.workstream],
-                    loader: false
+                    loader: false,
                 }, () => { console.log("LOG", this.state.workstreams) });
                 // });
 
@@ -210,8 +212,10 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
 
             if (res[1].status === 200) {
                 let response: IUser = await res[1].json();
+                console.log("response-incidentAssignedTo", response)
                 this.setState({
-                    incidentAssignedTo: response
+                    incidentAssignedTo: response,
+                    loader: false,
                 })
             }
         });
@@ -566,7 +570,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
             if (!workstream.inActive) {
                 console.log("Refresh!", workstream)
                 let description = <Text key={"description" + index} content={workstream.description} />
-                let assignedTo = <Text key={"assignedTo" + index} content={workstream.assignedTo} color="brand" weight="semibold"/>
+                let assignedTo = <Text key={"assignedTo" + index} content={workstream.assignedTo} color="brand" weight="semibold" />
 
                 if (workstream.description === "" || this.state.workstreams.length - 1 === index) {
                     description = <Input className="inputField" defaultValue={workstream.description} value={workstream.description} key={"assignedto" + index} placeholder="Description" fluid name="assignedto" onChange={(e) => this.onWorkstreamDescriptionChange(e, index)} />
@@ -604,7 +608,9 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                         </td>
                         <td>
                             <Button className="close-btn" content={<Icon iconName="trash" className="deleteIcon" />} iconOnly title="Close"
-                                onClick={() => this.removeWorkstream(workstream.id)} />
+                                onClick={() => this.removeWorkstream(workstream.id)}
+                                disabled={index === this.state.workstreams.length - 1}
+                            />
                         </td>
 
                         {/* <div hidden={index !== this.state.workstreams.length - 1}>
@@ -626,43 +632,44 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
             );
         }
         else {
-            console.log("workstreamBlock", workstreamBlock)
+            console.log("workstreamBlock", this.state.incidentAssignedTo.id)
             return (
                 <div className="taskModule">
                     <div className="formContainer ">
 
                         <Dropdown
-
                             items={incidentAssignees}
                             placeholder="Assign Incident"
                             noResultsMessage="We couldn't find any matches."
                             onSelectedChange={this.assigneeChanged}
-                            defaultValue={isNullOrUndefined(this.state.incidentAssignedTo.id) ? "" :
-                                this.state.incidentAssignedTo.displayName}
+                            // defaultValue={incidentAssignees[0]}
+                            value={this.state.incidentAssignedTo.id === null ? "AssignIncident" : incidentAssignees[incidentAssignees.findIndex((user) => user.content === (this.state.incidentAssignees.find((user) => user.id === this.state.incidentAssignedTo.id)!.userPrincipalName))]}
                         />
-                        <h4>Here are few workstreams</h4>
-                        <table className="table table-borderless">
-                            <thead>
-                                <tr>
-                                    <th>Priority</th>
-                                    <th>Description</th>
-                                    <th>Assigned to</th>
-                                    <th>Status</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {workstreamBlock}
-                            </tbody>
-                        </table>
-                        {/* <div hidden={index !== this.state.workstreams.length - 1}> */}
-                        <Flex gap="gap.smaller">
-                            <Icon iconName="add" className="addIcon" />
-                            <Button text content="Add another workstream" onClick={this.addWorkstreams}
-                                disabled={this.state.workstreams[this.state.workstreams.length - 1].description === ""
-                                    && this.state.workstreams[this.state.workstreams.length - 1].assignedTo === ""} />
-                        </Flex>
-                        {/* </div> */}
+                        <div>
+                            <h5>Workstream for incident {this.incidentNumber}</h5>
+                            <table className="table table-borderless">
+                                <thead>
+                                    <tr>
+                                        <th>Priority</th>
+                                        <th>Description</th>
+                                        <th>Assigned to</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {workstreamBlock}
+                                </tbody>
+                            </table>
+                            {/* <div hidden={index !== this.state.workstreams.length - 1}> */}
+                            <Flex gap="gap.smaller">
+                                <Icon iconName="add" className="addIcon" />
+                                <Button text content="Add another workstream" onClick={this.addWorkstreams}
+                                    disabled={this.state.workstreams[this.state.workstreams.length - 1].description === ""
+                                        && this.state.workstreams[this.state.workstreams.length - 1].assignedTo === ""} />
+                            </Flex>
+                            {/* </div> */}
+                        </div>
                     </div>
                     <div className="footerContainer">
                         <div className="buttonContainer">

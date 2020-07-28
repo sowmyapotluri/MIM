@@ -56,16 +56,17 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Get user configuration.
+        /// Get incident.
         /// </summary>
-        /// <param name="userObjectIdentifer">Active Directory object Id of user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        public async Task<IncidentEntity> GetAsync(string partitionKey, string rowKey)
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <param name="incidentId">Incident id.</param>
+        /// <returns>A task that represents the corresponding incident entity.</returns>
+        public async Task<IncidentEntity> GetAsync(string incidentNumber, string incidentId)
         {
             try
             {
                 await this.EnsureInitializedAsync().ConfigureAwait(false);
-                var retrieveOperation = TableOperation.Retrieve<IncidentEntity>(partitionKey, rowKey);
+                var retrieveOperation = TableOperation.Retrieve<IncidentEntity>(incidentNumber, incidentId);
                 var result = await this.cloudTable.ExecuteAsync(retrieveOperation).ConfigureAwait(false);
                 return (IncidentEntity)result?.Result;
             }
@@ -77,16 +78,16 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Get user configuration.
+        /// Get incident based on incident number.
         /// </summary>
-        /// <param name="partitionKey">Active Directory object Id of user.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
-        public async Task<IncidentEntity> GetAsync(string partitionKey)
+        /// <param name="incidentNumber">Incident number.</param>
+        /// <returns>A task that represents corresponding incident.</returns>
+        public async Task<IncidentEntity> GetAsync(string incidentNumber)
         {
             try
             {
                 await this.EnsureInitializedAsync().ConfigureAwait(false);
-                var condition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partitionKey);
+                var condition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, incidentNumber);
                 var query = new TableQuery<IncidentEntity>().Where(condition);
                 TableContinuationToken continuationToken = null;
                 var queryResult = await this.cloudTable.ExecuteQuerySegmentedAsync(query, continuationToken).ConfigureAwait(false);
@@ -100,9 +101,9 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Add or update user configuration.
+        /// Add or update incidents.
         /// </summary>
-        /// <param name="incident">User configuration entity.</param>
+        /// <param name="incident">Incident entity.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         public async Task<bool> AddAsync(IncidentEntity incident)
         {

@@ -18,6 +18,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
     using Microsoft.Teams.Apps.Bart.Cards;
     using Microsoft.Teams.Apps.Bart.Helpers;
     using Microsoft.Teams.Apps.Bart.Models;
+    using Microsoft.Teams.Apps.Bart.Models.Enum;
     using Microsoft.Teams.Apps.Bart.Models.Error;
     using Microsoft.Teams.Apps.Bart.Models.TableEntities;
     using Microsoft.Teams.Apps.Bart.Providers.Interfaces;
@@ -126,6 +127,8 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 var bridgeStatus = await this.conferenceBridgesStorageProvider.GetAsync(incident.Bridge).ConfigureAwait(false);
                 if (bridgeStatus.Available)
                 {
+                    string actualPriorityFromApp = incident.Priority;
+                    incident.Priority = "7";
                     Incident incidentCreated = await this.serviceNowProvider.CreateIncidentAsync(incident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa");
                     var incidentTableEntry = new IncidentEntity
                     {
@@ -137,13 +140,15 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         RequestedById = incident.RequestedById,
                         RequestedFor = incident.RequestedFor,
                         RequestedForId = incident.RequestedForId,
+                        Priority = actualPriorityFromApp,
+                        Scope = incident.Scope,
                     };
                     await this.incidentStorageProvider.AddAsync(incidentTableEntry).ConfigureAwait(false);
-                    //if (string.IsNullOrEmpty(incident.Id) && incident.Bridge == "0")
-                    //{
-                    //    bridgeStatus.Available = false;
-                    //    await this.conferenceBridgesStorageProvider.AddAsync(bridgeStatus).ConfigureAwait(false);
-                    //}
+                    if (string.IsNullOrEmpty(incident.Id) && incident.Bridge != "0")
+                    {
+                        bridgeStatus.Available = false;
+                        await this.conferenceBridgesStorageProvider.AddAsync(bridgeStatus).ConfigureAwait(false);
+                    }
                     if (workstreams.Count > 0)
                     {
                         WorkstreamEntity workstreamEntity = new WorkstreamEntity(incidentCreated);
@@ -165,8 +170,11 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                             }
                         }
 
-                        incidentCreated.WorkNotes = string.Join(',', workstreamString);
-                        await this.serviceNowProvider.UpdateIncidentAsync(incidentCreated, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        if (workstreamString.Count > 0)
+                        {
+                            incidentCreated.WorkNotes = string.Join(',', workstreamString);
+                            await this.serviceNowProvider.UpdateIncidentAsync(incidentCreated, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        }
                     }
 
                     return this.Ok(incidentCreated);
@@ -325,14 +333,18 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         listObject.CreatedOn = incident.CreatedOn;
                         listObject.UpdatedOn = incident.UpdatedOn;
                         listObject.Status = incidentEntity.Status;  // Till status options are figured out
+                        listObject.State = incident.State;
                         listObject.CurrentActivity = incident.CurrentActivity;
                         listObject.Id = incident.Id;
                         listObject.Number = incident.Number;
                         listObject.TeamConversationId = $"https://teams.microsoft.com/l/message/{threadId}/{messageId}";
+                        listObject.BridgeId = incidentEntity.BridgeId;
+                        listObject.BridgeLink = incidentEntity.BridgeLink;
+                        listObject.Priority = incident.Priority;
                         listObject.RequestedBy = new User
                         {
                             DisplayName = incidentEntity.RequestedBy == incidentEntity.RequestedFor ? incidentEntity.RequestedBy : incidentEntity.RequestedFor,
-                            Id = incidentEntity.RequestedById == incidentEntity.RequestedById ? incidentEntity.RequestedById : incidentEntity.RequestedForId,
+                            Id = incidentEntity.RequestedById == incidentEntity.RequestedForId ? incidentEntity.RequestedById : incidentEntity.RequestedForId,
                         };
                         listObject.AssignedTo = new User
                         {

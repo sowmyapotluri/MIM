@@ -1,3 +1,36 @@
+.taskModule {
+  height: 97% !important;
+  overflow-y: hidden;
+  .formContainer {
+      width: 100%;
+      // padding-right: 0.8rem;
+      // padding-left: 0.8rem;
+      // padding-top: 0.8rem;
+      padding-left: 2rem;
+      padding-right: 2rem;
+      // width: auto;
+      margin-top: 1rem!important;
+      // height: 80% !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      // height: 400px !important;   
+  }
+
+  .footerContainer {
+      position: absolute !important;
+      bottom: 5px;
+      left: 0;
+      padding-right: 2rem;
+      padding-left: 2rem;
+      width: 100%;
+      // padding-bottom: 2rem;
+
+      .buttonContainer {
+          display: inline;
+          margin-right:4px;
+      }
+  }
+}
 .deleteIcon{position: relative;font-size: 16px;}
 .ui-dropdown__container {
     height: 32px !important;
@@ -27,7 +60,11 @@ table {
     vertical-align: top;
     border-top: 1px solid #dee2e6;
   }
-  
+
+  table tr#hiddenRow  {
+    background-color:rgba(206, 202, 200, 0.938); 
+    // color:white;
+  }
   .table thead th {
     vertical-align: bottom;
     border-bottom: 2px solid #dee2e6;

@@ -79,6 +79,12 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// </summary>
         public string Status { get; set; }
 
+
+        /// <summary>
+        /// Gets or sets state of the incident.
+        /// </summary>
+        public string State { get; set; }
+
         /// <summary>
         /// Gets or sets bridge id of the incident.
         /// </summary>
