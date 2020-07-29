@@ -46,6 +46,13 @@ namespace Microsoft.Teams.Apps.Bart.Models
         [JsonProperty("priority")]
         public string Priority { get; set; }
 
+
+        /// <summary>
+        /// Gets or sets priority.
+        /// </summary>
+        [JsonProperty("severity")]
+        public string Severity { get; set; }
+
         /// <summary>
         /// Gets or sets sys_id.
         /// </summary>

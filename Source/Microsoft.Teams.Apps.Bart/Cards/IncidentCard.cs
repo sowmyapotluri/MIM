@@ -497,7 +497,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                 Style = AdaptiveChoiceInputStyle.Compact,
             };
 
-            choiceSet.Value = incident.Status;
+            choiceSet.Value = ChangeTicketStatusPayload.SuspendedAction;
             choiceSet.Choices = new List<AdaptiveChoice>
                     {
                         //new AdaptiveChoice

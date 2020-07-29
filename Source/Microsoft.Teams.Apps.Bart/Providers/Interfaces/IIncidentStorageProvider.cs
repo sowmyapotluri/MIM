@@ -32,7 +32,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// Get incidents.
         /// </summary>
         /// <param name="condition">Condition for searching.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <returns>A task that represents the list of incidents.</returns>
         Task<List<IncidentEntity>> GetIncidentsAsync(string condition);
 
         /// <summary>

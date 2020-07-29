@@ -14,16 +14,16 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
     public interface IStatusStorageProvider
     {
         /// <summary>
-        /// Add or update user configuration.
+        /// Add or update status.
         /// </summary>
-        /// <param name="status">User configuration entity.</param>
+        /// <param name="status">Status entity.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         Task<bool> AddAsync(StatusEntity status);
 
         /// <summary>
-        /// Get user configuration.
+        /// Get statuses.
         /// </summary>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <returns>A task that represents the list of statuses.</returns>
         Task<List<StatusEntity>> GetAsync();
     }
 }

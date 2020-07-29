@@ -604,7 +604,8 @@ namespace Microsoft.Teams.Apps.Bart.Bots
             await this.SendTypingIndicatorAsync(turnContext).ConfigureAwait(false);
 
             if (turnContext.Activity.Text == null && turnContext.Activity.Value != null && turnContext.Activity.Type == ActivityTypes.Message
-                && (!string.IsNullOrEmpty(JToken.Parse(turnContext.Activity.Value.ToString()).SelectToken("Action").ToString())))
+                && (!string.IsNullOrEmpty(JToken.Parse(turnContext.Activity.Value.ToString()).SelectToken("Action").ToString()))
+                )
             {
                 command = "CardAction";
             }
@@ -653,6 +654,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                         updateObject.BridgeDetails = await this.conferenceBridgesStorageProvider.GetAsync(incidentDetails.BridgeId).ConfigureAwait(false);
                         updateObject.Scope = incidentDetails.Scope;
                         updateObject.Status = values.Action;
+                        updateObject.Priority = incidentDetails.Priority;
                         var incidentCard = new IncidentCard(updateObject);
                         var attachment = incidentCard.GetIncidentAttachment();
                         if (values.Title != "Incident New")

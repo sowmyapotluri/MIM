@@ -55,9 +55,9 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Add or update user configuration.
+        /// Add or update status.
         /// </summary>
-        /// <param name="statusEntity">User configuration entity.</param>
+        /// <param name="statusEntity">Status entity.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
         public async Task<bool> AddAsync(StatusEntity statusEntity)
         {
@@ -76,9 +76,9 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Get active statuses.
+        /// Get statuses.
         /// </summary>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <returns>A task that represents the list of statuses.</returns>
         public async Task<List<StatusEntity>> GetAsync()
         {
             try

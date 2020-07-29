@@ -35,7 +35,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// Get incidents.
         /// </summary>
         /// <param name="searchQuery">Query for searching. </param>
-        /// <param name="token">Active Directory access token.</param>
+        /// <param name="token">ServiceNow token.</param>
         /// <returns>Event response object.</returns>
         Task<dynamic> SearchIncidentAsync(string searchQuery, string token);
 
@@ -44,7 +44,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// </summary>
         /// <param name="commandId">Bot command for searching. </param>
         /// <param name="searchQuery">Query for searching. </param>
-        /// <param name="token">Active Directory access token.</param>
+        /// <param name="token">ServiceNow token.</param>
         /// <returns>Event response object.</returns>
         Task<dynamic> GetIncidentAsync(string commandId, string searchQuery, string token);
 
@@ -52,7 +52,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// Get incident.
         /// </summary>
         /// <param name="incidentId">Incident id. </param>
-        /// <param name="token">Active Directory access token.</param>
+        /// <param name="token">ServiceNow token.</param>
         /// <returns>Event response object.</returns>
         Task<dynamic> GetIncidentAsync(string incidentId, string token);
     }

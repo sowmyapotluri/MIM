@@ -1,4 +1,4 @@
-﻿// <copyright file="UserConfigurationStorageProvider.cs" company="Microsoft Corporation">
+﻿// <copyright file="IncidentStorageProvider.cs" company="Microsoft Corporation">
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
@@ -125,7 +125,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         /// Get incidents.
         /// </summary>
         /// <param name="botCommand">Condition for searching.</param>
-        /// <returns>A task that represents the work queued to execute.</returns>
+        /// <returns>A task that represents the list of incidents.</returns>
         public async Task<List<IncidentEntity>> GetIncidentsAsync(string botCommand)
         {
             try

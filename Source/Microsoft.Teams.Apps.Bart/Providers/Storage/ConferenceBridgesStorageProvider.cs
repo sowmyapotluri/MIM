@@ -150,4 +150,3 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
     }
 }
-

@@ -128,7 +128,8 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 if (bridgeStatus.Available)
                 {
                     string actualPriorityFromApp = incident.Priority;
-                    incident.Priority = "7";
+                    incident.Priority = null;
+                    incident.Severity = "7";
                     Incident incidentCreated = await this.serviceNowProvider.CreateIncidentAsync(incident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa");
                     var incidentTableEntry = new IncidentEntity
                     {

@@ -1,4 +1,4 @@
-﻿ // <copyright file="UserConfigurationStorageProvider.cs" company="Microsoft Corporation">
+﻿// <copyright file="UserConfigurationStorageProvider.cs" company="Microsoft Corporation">
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
@@ -64,8 +64,8 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
             {
                 await this.EnsureInitializedAsync().ConfigureAwait(false);
                 var retrieveOperation = TableOperation.Retrieve<UserConfigurationEntity>("msteams", userObjectIdentifer);
-                var room = await this.cloudTable.ExecuteAsync(retrieveOperation).ConfigureAwait(false);
-                return (UserConfigurationEntity)room?.Result;
+                var result = await this.cloudTable.ExecuteAsync(retrieveOperation).ConfigureAwait(false);
+                return (UserConfigurationEntity)result?.Result;
             }
             catch (Exception ex)
             {

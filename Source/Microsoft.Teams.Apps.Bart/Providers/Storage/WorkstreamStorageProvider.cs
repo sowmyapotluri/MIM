@@ -100,7 +100,7 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Storage
         }
 
         /// <summary>
-        /// Add or update user configuration.
+        /// Add or update workstream.
         /// </summary>
         /// <param name="workstream">User configuration entity.</param>
         /// <returns>A task that represents whether it was successfull or not.</returns>
