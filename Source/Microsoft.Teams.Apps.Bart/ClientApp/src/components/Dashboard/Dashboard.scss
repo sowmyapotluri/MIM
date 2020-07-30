@@ -23,13 +23,20 @@
       padding-right: 2rem;
       padding-left: 2rem;
       width: 100%;
-      // padding-bottom: 2rem;
+      padding-bottom: 2rem;
 
       .buttonContainer {
-          display: inline;
-          margin-right:4px;
+          // display: inline;
+          // margin-right:4px;
       }
   }
+}
+
+.descriptionWidth{
+  width: 40%;
+}
+.marginForInputs{
+  margin-top: 8px;
 }
 .deleteIcon{position: relative;font-size: 16px;}
 .ui-dropdown__container {

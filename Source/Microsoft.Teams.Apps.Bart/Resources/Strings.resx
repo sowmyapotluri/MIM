@@ -178,7 +178,7 @@
     <comment>Subtitle for task module to edit workstreams</comment>
   </data>
   <data name="CreateIncident" xml:space="preserve">
-    <value>Create Incident</value>
+    <value>Create incident</value>
     <comment>Create incident task module subtitle</comment>
   </data>
   <data name="Bridge" xml:space="preserve">
@@ -235,5 +235,17 @@
   </data>
   <data name="WelcomeText" xml:space="preserve">
     <value>Welcome!</value>
+  </data>
+  <data name="NewIncidentReportedText" xml:space="preserve">
+    <value>New incident reported</value>
+  </data>
+  <data name="NewStatusText" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="ServiceRestoredStatusText" xml:space="preserve">
+    <value>Service restored</value>
+  </data>
+  <data name="SuspendedStatusText" xml:space="preserve">
+    <value>Suspended</value>
   </data>
 </root>

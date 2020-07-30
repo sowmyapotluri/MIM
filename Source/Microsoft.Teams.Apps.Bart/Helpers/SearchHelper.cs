@@ -1,5 +1,5 @@
-﻿// <copyright file="SearchHelper.cs" company="Microsoft">
-// Copyright (c) Microsoft. All rights reserved.
+﻿// <copyright file="SearchHelper.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
 namespace Microsoft.Teams.Apps.Bart.Helpers
@@ -84,27 +84,27 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
             switch (commandId)
             {
                 case RecentCommandId:
-                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(RecentCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(RecentCommandId, query).ConfigureAwait(false);
                     composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case NewCommandId:
-                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(NewCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(NewCommandId, query).ConfigureAwait(false);
                     composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case SuspendedCommandId:
-                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(SuspendedCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(SuspendedCommandId, query).ConfigureAwait(false);
                     composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case ServiceRestoredCommandId:
-                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(ServiceRestoredCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(ServiceRestoredCommandId, query).ConfigureAwait(false);
                     composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
 
                 case AllCommandId:
-                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(AllCommandId, query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    searchServiceResults = await serviceNowProvider.GetIncidentAsync(AllCommandId, query).ConfigureAwait(false);
                     composeExtensionResult = await GetMessagingExtensionResult(commandId, localTimestamp, searchServiceResults, incidentStorageProvider).ConfigureAwait(false);
                     break;
             }

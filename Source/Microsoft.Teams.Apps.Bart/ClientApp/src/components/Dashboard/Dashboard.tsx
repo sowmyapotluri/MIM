@@ -208,7 +208,7 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                             shortDescription: response[i].ShortDescription,
                             status: response[i].Status,
                             createdOn: response[i].CreatedOn,
-                            id: response[i].RowKey,
+                            id: response[i].Id,
                             updatedOn: response[i].UpdatedOn,
                             bridgeDetails: {
                                 code: response[i].BridgeId,
@@ -258,6 +258,7 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
     }
 
     private showDetails = (id: string, flag: boolean) => {
+        console.log("ShowDetails",id, flag)
         if (flag) {
             this.setState({
                 selectedIncident: id
@@ -276,6 +277,7 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
     }
 
     private renderBody = (incidents: IIncidentEntity[]) => {
+        
         let rows: any[] = [];
         let requestedUser, assignTo;
         (incidents.map((incident: IIncidentEntity, index: number) => {
@@ -338,7 +340,7 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                     <td>
                         <Text key={"number" + index} content={incident.number} />
                     </td>
-                    <td>
+                    <td className="descriptionWidth">
                         <Text key={"description" + index} content={incident.shortDescription} />
                     </td>
                     <td>
@@ -354,13 +356,13 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                         <Text key={"updatedOn" + index} content={incident.updatedOn}  weight="semibold" />
                     </td>
                     <td>
-                        <div onClick={()=>this.deeplinkToThread(incident.linkToThread)}>
+                        <div onClick={()=>this.deeplinkToThread(incident.linkToThread)} style={{ cursor: "pointer"}}>
                             <Flex gap="gap.small">
                                 <FlexItem push>
                                 <Avatar size="small" image={"https://homedepotbart.azurewebsites.net/color.png"}/>
                                 </FlexItem>
                                 <FlexItem grow>
-                                    <Text className="userPadding" content={"BART"} />
+                                    <Text className="userPadding" content={"BART"} color="brand"/>
                                 </FlexItem>
                             </Flex>
 
@@ -435,9 +437,9 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
         }
         else {
             this.setState({
-                newIncidents: this.state.masterData.filter((x: IIncidentEntity) => x.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())),
-                suspendedIncidents: this.state.masterData.filter((x: IIncidentEntity) => x.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())),
-                restoredIncidents: this.state.masterData.filter((x: IIncidentEntity) => x.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()))
+                newIncidents: this.state.masterData.filter(incident => incident.status === "1").filter((x: IIncidentEntity) => x.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())),
+                suspendedIncidents: this.state.masterData.filter(incident => incident.status === "2").filter((x: IIncidentEntity) => x.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())),
+                restoredIncidents: this.state.masterData.filter(incident => incident.status === "3").filter((x: IIncidentEntity) => x.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()))
             })
         }
     }
@@ -482,7 +484,7 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                     <div className="formContainer ">
                         <Flex>
                             <FlexItem>
-                                <Header content="Due this week" />
+                                <h5>Due this month</h5>
                             </FlexItem>
                             <FlexItem push>
                                 <Input icon={<SearchIcon />} placeholder="Search by description" onChange={this.searchIncidents} />

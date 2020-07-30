@@ -562,11 +562,13 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                 await this.incidentStorageProvider.AddAsync(incidentEntity).ConfigureAwait(false);
                 var workstreams = await this.workstreamStorageProvider.GetAllAsync(valuesFromTaskModule.Number).ConfigureAwait(false);
                 var sentWorkstreamNotificationTask = new List<Task>();
+                var notifiedUsers = new List<string>();
                 foreach (var workstream in workstreams)
                 {
-                    if (workstream.New)
+                    if (workstream.New && !notifiedUsers.Contains(workstream.AssignedToId))
                     {
                         var user = await this.userConfigurationStorageProvider.GetAsync(workstream.AssignedToId).ConfigureAwait(false);
+                        notifiedUsers.Add(workstream.AssignedToId);
                         if (user != null)
                         {
                             MicrosoftAppCredentials.TrustServiceUrl(teamCard.ServiceUrl);
@@ -601,7 +603,6 @@ namespace Microsoft.Teams.Apps.Bart.Bots
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
             var command = turnContext.Activity.Text;
-            await this.SendTypingIndicatorAsync(turnContext).ConfigureAwait(false);
 
             if (turnContext.Activity.Text == null && turnContext.Activity.Value != null && turnContext.Activity.Type == ActivityTypes.Message
                 && (!string.IsNullOrEmpty(JToken.Parse(turnContext.Activity.Value.ToString()).SelectToken("Action").ToString()))
@@ -626,7 +627,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                             Id = activityToUpdate.IncidentId,
                             CurrentActivity = currentActivity,
                         };
-                        await this.serviceNowProvider.UpdateIncidentAsync(updateIncident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        await this.serviceNowProvider.UpdateIncidentAsync(updateIncident).ConfigureAwait(false);
                         var incidentEntity = await this.incidentStorageProvider.GetAsync(activityToUpdate.IncidentNumber).ConfigureAwait(false);
                         var connector = new ConnectorClient(new Uri(incidentEntity.ServiceUrl), this.microsoftAppCredentials);
                         var activity = new Activity(ActivityTypes.Message)
@@ -642,6 +643,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                     }
                     else
                     {
+                        await this.SendTypingIndicatorAsync(turnContext).ConfigureAwait(false);
                         var values = JsonConvert.DeserializeObject<ChangeTicketStatusPayload>(turnContext.Activity.Value.ToString());
                         var incidentDetails = await this.incidentStorageProvider.GetAsync(values.IncidentNumber, values.IncidentId).ConfigureAwait(false);
                         var updateObject = new Incident
@@ -649,7 +651,7 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                             Id = values.IncidentId,
                             State = values.Action,
                         };
-                        updateObject = await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false); //await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                        updateObject = await this.serviceNowProvider.UpdateIncidentAsync(updateObject).ConfigureAwait(false); //await this.serviceNowProvider.UpdateIncidentAsync(updateObject, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
                         await this.incidentStorageProvider.AddAsync(new IncidentEntity { PartitionKey = values.IncidentNumber, RowKey = values.IncidentId, Status = values.Action}).ConfigureAwait(false);
                         updateObject.BridgeDetails = await this.conferenceBridgesStorageProvider.GetAsync(incidentDetails.BridgeId).ConfigureAwait(false);
                         updateObject.Scope = incidentDetails.Scope;
@@ -764,7 +766,6 @@ namespace Microsoft.Teams.Apps.Bart.Bots
                 cancellationToken).ConfigureAwait(false);
             return await taskCompletionSource.Task.ConfigureAwait(false);
         }
-
 
         /// <summary>
         /// Verify if the tenant Id in the message is the same tenant Id used when application was configured.

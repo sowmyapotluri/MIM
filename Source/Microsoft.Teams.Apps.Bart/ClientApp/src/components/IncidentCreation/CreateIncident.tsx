@@ -542,7 +542,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                     </div>
                     <div hidden={index !== this.state.workstreams.length - 1}>
                         <Flex gap="gap.smaller">
-                            <Icon iconName="add" className="pos-rel ft-18 ft-bld icon-sm" />
+                            {/* <Icon iconName="add" className="pos-rel ft-18 ft-bld icon-sm" /> */}
                             <Button text icon={<FluentIcon name="add"/>} content={"Add another workstream"} onClick={this.addWorkstreams}
                                 disabled={this.state.workstreams[this.state.workstreams.length - 1].description === ""
                                     && this.state.workstreams[this.state.workstreams.length - 1].assignedTo === ""} />
@@ -592,7 +592,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                 </div>
                             </div>
                             <div className="row">
-                                <div className="col-md-8">
+                                <div className="col-md-8 marginForInputs">
                                     <Flex gap="gap.smaller">
                                         <Text content="Short description(Note: max 250 characters)" />
                                     </Flex>
@@ -603,7 +603,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         <Text className="fontItalic" hidden={!(this.state.shortDescription.length > 250)} content="Short description should be less than 250 characters" size="small" error />
                                     </Flex>
                                 </div>
-                                <div className="col-md-4">
+                                <div className="col-md-4 marginForInputs">
                                     <Flex gap="gap.smaller">
                                         <Text content="Scope" />
                                     </Flex>
@@ -613,7 +613,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                     </Flex>
                                 </div>
                             </div>
-                            <div className="row paddingForContent">
+                            <div className="row paddingForContent marginForInputs">
                                 <div className="col-md-8">
                                     <Flex gap="gap.smaller" column>
                                         <Text content="Description of the reported problem" />
@@ -676,7 +676,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                         {workstreamBlock}
 
                         <div className="footerContainer">
-                            <div className="buttonContainer">
+                            {/* <div className="buttonContainer"> */}
                                 <Flex gap="gap.small">
                                     <FlexItem grow>
                                         <Text content=""/>
@@ -687,7 +687,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                                         />
                                     </FlexItem>
                                 </Flex>
-                            </div>
+                            {/* </div> */}
                         </div>
                     </div>
                 </div >

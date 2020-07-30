@@ -19,41 +19,37 @@ namespace Microsoft.Teams.Apps.Bart.Providers.Interfaces
         /// Create new incident.
         /// </summary>
         /// <param name="incident"><see cref="Incident"/> object. </param>
-        /// <param name="token">Active Directory access token.</param>
         /// <returns>Event response object.</returns>
-        Task<dynamic> CreateIncidentAsync(Incident incident, string token);
+        Task<dynamic> CreateIncidentAsync(Incident incident);
 
         /// <summary>
         /// Update new incident.
         /// </summary>
         /// <param name="incident"><see cref="Incident"/> object. </param>
-        /// <param name="token">ServiceNow token.</param>
         /// <returns>Event response object.</returns>
-        Task<dynamic> UpdateIncidentAsync(Incident incident, string token);
+        Task<dynamic> UpdateIncidentAsync(Incident incident);
 
         /// <summary>
         /// Get incidents.
         /// </summary>
-        /// <param name="searchQuery">Query for searching. </param>
-        /// <param name="token">ServiceNow token.</param>
+        /// <param name="currentMonthStartDate">Month start date. </param>
+        /// <param name="currentMonthEndDate">Month end date. </param>
         /// <returns>Event response object.</returns>
-        Task<dynamic> SearchIncidentAsync(string searchQuery, string token);
+        Task<dynamic> SearchIncidentAsync(DateTime currentMonthStartDate, DateTime currentMonthEndDate);
 
         /// <summary>
         /// Get incidents based on factors.
         /// </summary>
         /// <param name="commandId">Bot command for searching. </param>
         /// <param name="searchQuery">Query for searching. </param>
-        /// <param name="token">ServiceNow token.</param>
         /// <returns>Event response object.</returns>
-        Task<dynamic> GetIncidentAsync(string commandId, string searchQuery, string token);
+        Task<dynamic> GetIncidentAsync(string commandId, string searchQuery);
 
         /// <summary>
         /// Get incident.
         /// </summary>
         /// <param name="incidentId">Incident id. </param>
-        /// <param name="token">ServiceNow token.</param>
         /// <returns>Event response object.</returns>
-        Task<dynamic> GetIncidentAsync(string incidentId, string token);
+        Task<dynamic> GetIncidentAsync(string incidentId);
     }
 }

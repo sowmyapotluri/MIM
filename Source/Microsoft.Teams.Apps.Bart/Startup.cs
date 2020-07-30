@@ -77,8 +77,8 @@ namespace Microsoft.Teams.Apps.Bart
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true,
-                    ValidAudiences = new List<string> { this.Configuration["AppBaseUri"] }, // "api://homedepotbart.azurewebsites.net/ad9dc5a5-48a5-4416-9a85-1f89caddb65f" },
-                    ValidIssuers = new List<string> { this.Configuration["AppBaseUri"] }, //, "https://login.microsoftonline.com/63889e9f-f4b2-4043-8b8a-f29d2722b814/v2.0", "https://sts.windows.net/63889e9f-f4b2-4043-8b8a-f29d2722b814/" },
+                    ValidAudiences = new List<string> { this.Configuration["AppBaseUri"] },
+                    ValidIssuers = new List<string> { this.Configuration["AppBaseUri"] },
                     ValidateIssuer = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(this.Configuration["SecurityKey"])),
@@ -112,7 +112,11 @@ namespace Microsoft.Teams.Apps.Bart
             // Create the Conversation state. (Used by the Dialog system itself.)
             services.AddSingleton<ConversationState>();
             services.AddSingleton<TelemetryClient>();
-            services.AddSingleton<IServiceNowProvider, ServiceNowProvider>();
+            services.AddSingleton<IServiceNowProvider>(provider => new ServiceNowProvider(
+                (IApiHelper)provider.GetService(typeof(IApiHelper)),
+                (TelemetryClient)provider.GetService(typeof(TelemetryClient)),
+                this.Configuration["ServiceNowUserName"],
+                this.Configuration["ServiceNowPassword"]));
 
             services.AddSingleton<MemoryCache>();
 

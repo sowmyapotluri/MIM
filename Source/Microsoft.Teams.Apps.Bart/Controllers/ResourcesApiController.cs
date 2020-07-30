@@ -12,6 +12,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Teams.Apps.Bart.Helpers;
     using Microsoft.Teams.Apps.Bart.Models;
     using Microsoft.Teams.Apps.Bart.Models.Error;
@@ -54,25 +55,33 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
         /// </summary>
         private readonly ITokenHelper tokenHelper;
 
+        /// <summary>
+        /// Helper class to use graph api.
+        /// </summary>
         private readonly IGraphApiHelper graphApiHelper;
 
-        private readonly string graphApiToSearchUsers = "/v1.0/users?$filter=startswith(displayName,'{0}')&$select=displayName,userPrincipalName,id";
-
-        private readonly string graphApiToGetIncidemntManagers = "/v1.0/groups/{0}/members?$select=displayName,userPrincipalName,id";
+        /// <summary>
+        /// Configuration settings.
+        /// </summary>
+        private readonly IConfiguration configuration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourcesApiController"/> class.
         /// </summary>
+        /// <param name="tokenHelper">Generating and validating JWT token.</param>
         /// <param name="statusStorageProvider">Helper class for getting available status.</param>
         /// <param name="telemetryClient">Telemetry client to log event and errors.</param>
         /// <param name="conferenceBridgesStorageProvider">Helper class for getting available conference rooms.</param>
-        public ResourcesApiController(ITokenHelper tokenHelper, IStatusStorageProvider statusStorageProvider, IConferenceBridgesStorageProvider conferenceBridgesStorageProvider, IGraphApiHelper graphApiHelper, TelemetryClient telemetryClient)
+        /// <param name="graphApiHelper">Helper class to use graph api.</param>
+        /// <param name="_configuration">Configuration values.</param>
+        public ResourcesApiController(ITokenHelper tokenHelper, IStatusStorageProvider statusStorageProvider, IConferenceBridgesStorageProvider conferenceBridgesStorageProvider, IGraphApiHelper graphApiHelper, TelemetryClient telemetryClient, IConfiguration configuration)
         {
             this.tokenHelper = tokenHelper;
             this.statusStorageProvider = statusStorageProvider;
             this.conferenceBridgesStorageProvider = conferenceBridgesStorageProvider;
             this.graphApiHelper = graphApiHelper;
             this.telemetryClient = telemetryClient;
+            this.configuration = configuration;
         }
 
         /// <summary>
@@ -119,10 +128,10 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         });
                 }
 
-                string url = string.Format(this.graphApiToGetIncidemntManagers, "b423a73a-e033-4c91-9bd8-8f45a14a56da");
+                string url = string.Format(Constants.GraphApiToGetIncidemntManagers, this.configuration["IncidentManagersTeam"]);
                 if (fromFlag == 1)
                 {
-                    url = string.Format(this.graphApiToSearchUsers, searchQuery);
+                    url = string.Format(Constants.GraphApiToSearchUsers, searchQuery);
                 }
 
                 var result = await this.graphApiHelper.GetAsync(url, token).ConfigureAwait(false);

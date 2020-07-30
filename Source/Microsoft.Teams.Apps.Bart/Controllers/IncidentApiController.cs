@@ -106,8 +106,8 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
         {
             try
             {
-                Incident incident = incidentRequest.Incident; //JsonConvert.DeserializeObject<Incident>(incidentRequest.Incident.ToString());
-                List<WorkstreamEntity> workstreams = incidentRequest.Workstreams; //JsonConvert.DeserializeObject<List<WorkstreamEntity>>(incidentRequest.Workstreams.ToString());
+                Incident incident = incidentRequest.Incident;
+                List<WorkstreamEntity> workstreams = incidentRequest.Workstreams;
                 var claims = this.GetUserClaims();
                 this.telemetryClient.TrackTrace($"User {claims.UserObjectIdentifer} submitted request to get supported time zones.");
 
@@ -128,9 +128,9 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 if (bridgeStatus.Available)
                 {
                     string actualPriorityFromApp = incident.Priority;
-                    incident.Priority = null;
-                    incident.Severity = "7";
-                    Incident incidentCreated = await this.serviceNowProvider.CreateIncidentAsync(incident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa");
+                    incident.Priority = "7";
+                    //incident.Severity = "7";
+                    Incident incidentCreated = await this.serviceNowProvider.CreateIncidentAsync(incident);
                     var incidentTableEntry = new IncidentEntity
                     {
                         PartitionKey = incidentCreated.Number,
@@ -174,7 +174,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         if (workstreamString.Count > 0)
                         {
                             incidentCreated.WorkNotes = string.Join(',', workstreamString);
-                            await this.serviceNowProvider.UpdateIncidentAsync(incidentCreated, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                            await this.serviceNowProvider.UpdateIncidentAsync(incidentCreated).ConfigureAwait(false);
                         }
                     }
 
@@ -305,29 +305,25 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 }
 
                 var currentDay = Convert.ToDateTime(weekDay);
-                var currentWeekDay = currentDay.DayOfWeek;
-                int daysTillCurrentDay = currentWeekDay - DayOfWeek.Sunday;
-                DateTime currentWeekStartDate = currentDay.AddDays(-daysTillCurrentDay).Date;
-                DateTime currentWeekEndDate = currentDay.AddDays((double)(DayOfWeek.Saturday - daysTillCurrentDay)).Date;
-                var query = string.Format(
-                    "BETWEENjavascript%3Ags.dateGenerate('{0}-{1}-{2}'%2C'00%3A00%3A00')%40javascript%3Ags.dateGenerate('{3}-{4}-{5}'%2C'23%3A59%3A59')",
-                    currentWeekStartDate.Year,
-                    currentWeekStartDate.Month,
-                    currentWeekStartDate.Day,
-                    currentWeekEndDate.Year,
-                    currentWeekEndDate.Month,
-                    currentWeekEndDate.Day);
+                DateTime currentMonthStartDate = new DateTime(currentDay.Year, currentDay.Month, 1);
+                DateTime currentMonthEndDate = currentMonthStartDate.AddMonths(1).AddDays(-1);
                 List<IncidentListObject> incidentEntities = new List<IncidentListObject>();
-                var incidents = await this.serviceNowProvider.SearchIncidentAsync(query, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
-                IncidentListObject listObject = new IncidentListObject();
+                var incidents = await this.serviceNowProvider.SearchIncidentAsync(currentMonthStartDate, currentMonthEndDate).ConfigureAwait(false);
                 foreach (Incident incident in incidents)
                 {
                     var incidentEntity = await this.incidentStorageProvider.GetAsync(incident.Number, incident.Id).ConfigureAwait(false);
                     if (incidentEntity != null)
                     {
-                        string[] threadAndMessageId = incidentEntity.TeamConversationId.Split(";");
-                        var threadId = threadAndMessageId[0];
-                        var messageId = threadAndMessageId[1].Split("=")[1];
+                        IncidentListObject listObject = new IncidentListObject();
+
+                        string[] threadAndMessageId = string.IsNullOrEmpty(incidentEntity.PersonalConversationId)? null : incidentEntity.TeamConversationId.Split(";");
+                        var threadId = string.Empty;
+                        var messageId = string.Empty;
+                        if (threadAndMessageId != null)
+                        {
+                            threadId = threadAndMessageId[0];
+                            messageId = threadAndMessageId[1].Split("=")[1];
+                        }
 
                         listObject.ShortDescription = incident.Short_Description;
                         listObject.Description = incident.Description;
@@ -364,7 +360,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         Requests = allRequests,
                     };
 
-                    var result = await this.graphApiHelper.PostAsync("https://graph.microsoft.com/v1.0/$batch", token, JsonConvert.SerializeObject(payload));
+                    var result = await this.graphApiHelper.PostAsync(Constants.GraphBatchRequest, token, JsonConvert.SerializeObject(payload));
                     var responseMessage = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(responseMessage))
                     {

@@ -106,7 +106,7 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Create Incident.
+        ///   Looks up a localized string similar to Create incident.
         /// </summary>
         public static string CreateIncident {
             get {
@@ -196,6 +196,24 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to New incident reported.
+        /// </summary>
+        public static string NewIncidentReportedText {
+            get {
+                return ResourceManager.GetString("NewIncidentReportedText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New.
+        /// </summary>
+        public static string NewStatusText {
+            get {
+                return ResourceManager.GetString("NewStatusText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Report an incident
         ///.
         /// </summary>
@@ -211,6 +229,15 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         public static string Scope {
             get {
                 return ResourceManager.GetString("Scope", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Service restored.
+        /// </summary>
+        public static string ServiceRestoredStatusText {
+            get {
+                return ResourceManager.GetString("ServiceRestoredStatusText", resourceCulture);
             }
         }
         
@@ -256,6 +283,15 @@ namespace Microsoft.Teams.Apps.Bart.Resources {
         public static string SupportedCommands {
             get {
                 return ResourceManager.GetString("SupportedCommands", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Suspended.
+        /// </summary>
+        public static string SuspendedStatusText {
+            get {
+                return ResourceManager.GetString("SuspendedStatusText", resourceCulture);
             }
         }
         

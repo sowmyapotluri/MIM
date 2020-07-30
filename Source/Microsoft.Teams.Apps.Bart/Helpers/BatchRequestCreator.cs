@@ -39,28 +39,34 @@ namespace Microsoft.Teams.Apps.Bart.Helpers
            List<User> users = new List<User>();
            foreach (IncidentListObject incidentObject in incidents)
             {
-                if (users.Select((user) => user.Id == incidentObject.RequestedBy.Id).Count() == 0)
+                if (!string.IsNullOrEmpty(incidentObject.RequestedBy.Id))
                 {
-                    users.Add(incidentObject.RequestedBy);
-                    BatchRequestCreator batchRequestCreator = new BatchRequestCreator()
+                    if (users.Select((user) => user.Id == incidentObject.RequestedBy.Id).Count() == 0)
                     {
-                        Id = incidentObject.RequestedBy.Id,
-                        Method = "GET",
-                        URL = "/users/" + incidentObject.RequestedBy.Id + "/photo/$value",
-                    };
-                    request.Add(batchRequestCreator);
+                        users.Add(incidentObject.RequestedBy);
+                        BatchRequestCreator batchRequestCreator = new BatchRequestCreator()
+                        {
+                            Id = incidentObject.RequestedBy.Id,
+                            Method = "GET",
+                            URL = "/users/" + incidentObject.RequestedBy.Id + "/photo/$value",
+                        };
+                        request.Add(batchRequestCreator);
+                    }
                 }
 
-                if (users.Select((user) => user.Id == incidentObject.AssignedTo.Id).Count() == 0)
+                if (!string.IsNullOrEmpty(incidentObject.AssignedTo.Id))
                 {
-                    users.Add(incidentObject.AssignedTo);
-                    BatchRequestCreator batchRequestCreator = new BatchRequestCreator()
+                    if (users.Select((user) => user.Id == incidentObject.AssignedTo.Id).Count() == 0)
                     {
-                        Id = incidentObject.AssignedTo.Id,
-                        Method = "GET",
-                        URL = "/users/" + incidentObject.AssignedTo.Id + "/photo/$value",
-                    };
-                    request.Add(batchRequestCreator);
+                        users.Add(incidentObject.AssignedTo);
+                        BatchRequestCreator batchRequestCreator = new BatchRequestCreator()
+                        {
+                            Id = incidentObject.AssignedTo.Id,
+                            Method = "GET",
+                            URL = "/users/" + incidentObject.AssignedTo.Id + "/photo/$value",
+                        };
+                        request.Add(batchRequestCreator);
+                    }
                 }
             }
 

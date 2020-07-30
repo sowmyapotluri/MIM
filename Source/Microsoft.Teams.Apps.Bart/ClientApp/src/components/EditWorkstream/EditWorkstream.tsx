@@ -643,7 +643,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                             noResultsMessage="We couldn't find any matches."
                             onSelectedChange={this.assigneeChanged}
                             // defaultValue={incidentAssignees[0]}
-                            value={this.state.incidentAssignedTo.id === null ? "AssignIncident" : incidentAssignees[incidentAssignees.findIndex((user) => user.content === (this.state.incidentAssignees.find((user) => user.id === this.state.incidentAssignedTo.id)!.userPrincipalName))]}
+                            value={this.state.incidentAssignedTo.id === null ? "Assign Incident" : incidentAssignees[incidentAssignees.findIndex((user) => user.content === (this.state.incidentAssignees.find((user) => user.id === this.state.incidentAssignedTo.id)!.userPrincipalName))]}
                         />
                         <div>
                             <h5>Workstream for incident {this.incidentNumber}</h5>
@@ -672,13 +672,13 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                         </div>
                     </div>
                     <div className="footerContainer">
-                        <div className="buttonContainer">
+                        {/* <div className="buttonContainer"> */}
                             <Flex gap="gap.small">
                                 <FlexItem push>
                                     <Button content="Submit" primary className="bottomButton" onClick={this.submitWorkstreams} />
                                 </FlexItem>
                             </Flex>
-                        </div>
+                        {/* </div> */}
                     </div>
                 </div >
             );

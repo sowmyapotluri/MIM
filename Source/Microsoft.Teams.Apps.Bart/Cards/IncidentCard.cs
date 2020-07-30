@@ -49,7 +49,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
         /// <param name="title">Title text for the card.</param>
         /// <param name="footer">Flag to show the status of the incident.</param>
         /// <returns>Adaptive card attachment for bot introduction and bot commands to start with.</returns>
-        public Attachment GetIncidentAttachment(IncidentEntity incidentEntity = null, string title = "New Incident reported", bool footer = false)
+        public Attachment GetIncidentAttachment(IncidentEntity incidentEntity = null, string title = "New incident reported", bool footer = false)
         {
             var footerContainer = new AdaptiveContainer();
             var activityColumnSet = new AdaptiveColumnSet
@@ -99,7 +99,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
 
             if (footer || this.incident.Status != "1")
             {
-                string footerMessage = title != "New Incident reported" ? "closed" : this.incident.Status == "2" ? "suspended" : "service restored";
+                string footerMessage = title != "New incident reported" ? "closed" : this.incident.Status == "2" ? "suspended" : "service restored";
                 footerContainer = new AdaptiveContainer
                 {
                     Style = AdaptiveContainerStyle.Attention,
@@ -195,7 +195,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                 {
                     new AdaptiveContainer
                     {
-                        Style = title == "New Incident reported" ? AdaptiveContainerStyle.Warning : AdaptiveContainerStyle.Good,
+                        Style = title == "New incident reported" ? AdaptiveContainerStyle.Warning : AdaptiveContainerStyle.Good,
                         Bleed = true,
                         Items = new List<AdaptiveElement>
                         {
@@ -227,7 +227,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                                Size = AdaptiveTextSize.Medium,
                                                Color = this.incident.Priority == "7" ? AdaptiveTextColor.Attention : AdaptiveTextColor.Default,
                                                HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                               Text = string.Format("{0} Priority!", Enum.GetName(typeof(Priority), Convert.ToInt32(this.incident.Priority))),
+                                               Text = string.Format("{0} priority!", Enum.GetName(typeof(Priority), Convert.ToInt32(this.incident.Priority))),
                                            },
                                        },
                                    },
@@ -263,7 +263,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                                         Size = AdaptiveTextSize.Default,
                                         Color = this.incident.Status == "1" ? AdaptiveTextColor.Good: AdaptiveTextColor.Default,
                                         HorizontalAlignment = AdaptiveHorizontalAlignment.Right,
-                                        Text = this.incident.Status == "1" ? "New" : this.incident.Status == "2" ? "Suspended" : "Service Restored",
+                                        Text = this.incident.Status == "1" ? Strings.NewStatusText : this.incident.Status == "2" ? Strings.SuspendedStatusText : Strings.ServiceRestoredStatusText,
                                     },
                                 },
                             },

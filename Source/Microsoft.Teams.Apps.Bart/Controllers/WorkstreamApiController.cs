@@ -129,10 +129,12 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 var sentWorkstreamNotificationTask = new List<Task>();
                 if (workstreams.Count > 0)
                 {
+                    var notifiedUsers = new List<string>();
                     List<string> workstreamString = new List<string>();
                     var incidentTableData = await this.incidentStorageProvider.GetAsync(workstreams.FirstOrDefault().PartitionKey).ConfigureAwait(false);
                     Incident incident = await this.serviceNowProvider.GetIncidentAsync(incidentTableData.RowKey, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
                     incident.Status = incidentTableData.Status;
+                    incident.Priority = incidentTableData.Priority;
                     incident.BridgeDetails = new ConferenceRoomEntity
                     {
                         Code = incidentTableData.BridgeId,
@@ -154,9 +156,10 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                                     workstreams.Remove(workstream);
                                 }
 
-                                if (workstream.New)
+                                if (workstream.New && !notifiedUsers.Contains(workstream.AssignedToId))
                                 {
                                     var user = await this.userConfigurationStorageProvider.GetAsync(workstream.AssignedToId).ConfigureAwait(false);
+                                    notifiedUsers.Add(workstream.AssignedToId);
                                     if (user != null)
                                     {
                                         MicrosoftAppCredentials.TrustServiceUrl(incidentTableData.ServiceUrl);
@@ -175,7 +178,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                     }
 
                     incident.WorkNotes = string.Join(',', workstreamString);
-                    await this.serviceNowProvider.UpdateIncidentAsync(incident, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    await this.serviceNowProvider.UpdateIncidentAsync(incident).ConfigureAwait(false);
                     await Task.WhenAll(sentWorkstreamNotificationTask).ConfigureAwait(false);
                 }
 
