@@ -77,9 +77,9 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
     incidentNumber?: string | null = null;
     incidentId?: string | null = null;
     assignedToChanged?: boolean = false;
-    // appInsights: ApplicationInsights;
-
-
+    /**Logged in user */
+    userObjectId?: string | null = null;
+    appInsights: ApplicationInsights;
 
     constructor(props: {}) {
         super(props);
@@ -134,22 +134,23 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
         let params = new URLSearchParams(search);
         this.telemetry = params.get("telemetry");
         this.token = params.get("token");
-        // this.appInsights = new ApplicationInsights({
-        //     config: {
-        //         instrumentationKey: this.telemetry,
-        //         extensions: [reactPlugin],
-        //         extensionConfig: {
-        //             [reactPlugin.identifier]: { history: browserHistory }
-        //         }
-        //     }
-        // });
-        // this.appInsights.loadAppInsights();
+        this.appInsights = new ApplicationInsights({
+            config: {
+                instrumentationKey: this.telemetry,
+                extensions: [reactPlugin],
+                extensionConfig: {
+                    [reactPlugin.identifier]: { history: browserHistory }
+                }
+            }
+        });
+        this.appInsights.loadAppInsights();
 
     };
 
     public componentDidMount = () => {
         microsoftTeams.initialize();
         microsoftTeams.getContext((context) => {
+            this.userObjectId = context.userObjectId;
             console.log("microsoft teams", context)
         });
         document.removeEventListener("keydown", this.escFunction, false);
@@ -192,8 +193,7 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                         // })
                     }
 
-                    // this.setState({ authorized: false });
-                    // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+                    this.appInsights.trackTrace({ message: `User ${this.userObjectId} is unauthorized!`, severityLevel: SeverityLevel.Warning });
                     return response;
                 }
                 else if (res.status === 200) {
@@ -201,7 +201,6 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                     let incidents: IIncidentEntity[] = [];
                     for (let i = 0; i < response.length; i++) {
                         let incident: IIncidentEntity = {
-                            // bridge: response[i].Id,
                             description: response[i].Description,
                             number: response[i].Number,
                             priority: response[i].Id,
@@ -240,7 +239,6 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                         }
                         incidents.push(incident);
                     }
-                    console.log("allIncidents", incidents)
                     this.setState({
                         newIncidents: incidents.filter(incident => incident.status === "1"),
                         suspendedIncidents: incidents.filter(incident => incident.status === "2"),
@@ -250,15 +248,14 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                     });
                 }
                 else {
-                    // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                    // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+                    this.appInsights.trackTrace({ message: `'GetAllIncident' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
                 }
 
             });
     }
 
     private showDetails = (id: string, flag: boolean) => {
-        console.log("ShowDetails",id, flag)
+        console.log("ShowDetails", id, flag)
         if (flag) {
             this.setState({
                 selectedIncident: id
@@ -272,12 +269,12 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
     }
 
     private deeplinkToThread = (link: string) => {
-        console.log("link",link)
+        console.log("link", link)
         microsoftTeams.executeDeepLink(link);
     }
 
     private renderBody = (incidents: IIncidentEntity[]) => {
-        
+
         let rows: any[] = [];
         let requestedUser, assignTo;
         (incidents.map((incident: IIncidentEntity, index: number) => {
@@ -344,25 +341,25 @@ export default class Dashboard extends React.Component<{}, IDashboardState> {
                         <Text key={"description" + index} content={incident.shortDescription} />
                     </td>
                     <td>
-                        <Text key={"brideId" + index} content={incident.bridgeId}  weight="semibold" />
+                        <Text key={"brideId" + index} content={incident.bridgeId} weight="semibold" />
                     </td>
                     <td>
-                        <Text key={"state" + index} content={incident.state}  weight="semibold" />
+                        <Text key={"state" + index} content={incident.state} weight="semibold" />
                     </td>
                     <td>
-                        <Text key={"createdOn" + index} content={incident.createdOn}  weight="semibold" />
+                        <Text key={"createdOn" + index} content={incident.createdOn} weight="semibold" />
                     </td>
                     <td>
-                        <Text key={"updatedOn" + index} content={incident.updatedOn}  weight="semibold" />
+                        <Text key={"updatedOn" + index} content={incident.updatedOn} weight="semibold" />
                     </td>
                     <td>
-                        <div onClick={()=>this.deeplinkToThread(incident.linkToThread)} style={{ cursor: "pointer"}}>
+                        <div onClick={() => this.deeplinkToThread(incident.linkToThread)} style={{ cursor: "pointer" }}>
                             <Flex gap="gap.small">
                                 <FlexItem push>
-                                <Avatar size="small" image={"https://homedepotbart.azurewebsites.net/color.png"}/>
+                                    <Avatar size="small" image={"https://homedepotbart.azurewebsites.net/color.png"} />
                                 </FlexItem>
                                 <FlexItem grow>
-                                    <Text className="userPadding" content={"BART"} color="brand"/>
+                                    <Text className="userPadding" content={"BART"} color="brand" />
                                 </FlexItem>
                             </Flex>
 

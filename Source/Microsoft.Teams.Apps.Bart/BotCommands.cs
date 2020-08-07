@@ -40,9 +40,13 @@ namespace Microsoft.Teams.Apps.Bart
         public const string ViewWorkstream = "VIEW WORKSTREAM";
 
         /// <summary>
-        /// View workstreams command.
+        /// Take a tour command.
         /// </summary>
         public const string TakeTour = "TAKE A TOUR";
 
+        /// <summary>
+        /// Action performed from card command.
+        /// </summary>
+        public const string CardAction = "CARDACTION";
     }
 }

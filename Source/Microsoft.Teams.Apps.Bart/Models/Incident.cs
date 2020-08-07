@@ -125,18 +125,6 @@ namespace Microsoft.Teams.Apps.Bart.Models
         [JsonProperty("scope")]
         public string Scope { get; set; }
 
-        ///// <summary>
-        ///// Gets or sets assignedTo display name.
-        ///// </summary>
-        //[JsonProperty("assignedTo")]
-        //public string AssignedTo { get; set; }
-
-        ///// <summary>
-        ///// Gets or sets assignedTo id.
-        ///// </summary>
-        //[JsonProperty("assignedToId")]
-        //public string AssignedToId { get; set; }
-
         /// <summary>
         /// Gets or sets requested by display name.
         /// </summary>
@@ -160,6 +148,12 @@ namespace Microsoft.Teams.Apps.Bart.Models
         /// </summary>
         [JsonProperty("requestedForId")]
         public string RequestedForId { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether request originated from technology support center.
+        /// </summary>
+        [JsonProperty("tsc")]
+        public bool TSC { get; set; }
 
     }
 }

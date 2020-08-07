@@ -132,7 +132,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                     var notifiedUsers = new List<string>();
                     List<string> workstreamString = new List<string>();
                     var incidentTableData = await this.incidentStorageProvider.GetAsync(workstreams.FirstOrDefault().PartitionKey).ConfigureAwait(false);
-                    Incident incident = await this.serviceNowProvider.GetIncidentAsync(incidentTableData.RowKey, "U1ZDX3RlYW1zX2F1dG9tYXRpb246eWV0KTVUajgmSjkhQUFa").ConfigureAwait(false);
+                    Incident incident = await this.serviceNowProvider.GetIncidentAsync(incidentTableData.RowKey).ConfigureAwait(false);
                     incident.Status = incidentTableData.Status;
                     incident.Priority = incidentTableData.Priority;
                     incident.BridgeDetails = new ConferenceRoomEntity
@@ -172,6 +172,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                                 }
 
                                 workstream.New = false;
+                                workstreamString.Add($"{workstream.Priority}: {workstream.Description}: {workstream.AssignedTo}: {workstream.Status}");
                                 await this.workstreamStorageProvider.AddAsync(workstream).ConfigureAwait(false);
                             }
                         }

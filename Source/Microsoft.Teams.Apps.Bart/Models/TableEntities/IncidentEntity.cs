@@ -133,9 +133,8 @@ namespace Microsoft.Teams.Apps.Bart.Models.TableEntities
         public string RequestedForId { get; set; }
 
         /// <summary>
-        /// Gets or sets incident current activity.
+        /// Gets or sets a value indicating whether request originated from technology support center.
         /// </summary>
-        //public string CurrentActivity { get; set; }
-
+        public string TSC { get; set; }
     }
 }

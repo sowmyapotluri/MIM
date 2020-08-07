@@ -129,7 +129,6 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 {
                     string actualPriorityFromApp = incident.Priority;
                     incident.Priority = "7";
-                    //incident.Severity = "7";
                     Incident incidentCreated = await this.serviceNowProvider.CreateIncidentAsync(incident);
                     var incidentTableEntry = new IncidentEntity
                     {
@@ -143,6 +142,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         RequestedForId = incident.RequestedForId,
                         Priority = actualPriorityFromApp,
                         Scope = incident.Scope,
+                        TSC = incident.TSC.ToString().ToLower(),
                     };
                     await this.incidentStorageProvider.AddAsync(incidentTableEntry).ConfigureAwait(false);
                     if (string.IsNullOrEmpty(incident.Id) && incident.Bridge != "0")
@@ -150,6 +150,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                         bridgeStatus.Available = false;
                         await this.conferenceBridgesStorageProvider.AddAsync(bridgeStatus).ConfigureAwait(false);
                     }
+
                     if (workstreams.Count > 0)
                     {
                         WorkstreamEntity workstreamEntity = new WorkstreamEntity(incidentCreated);

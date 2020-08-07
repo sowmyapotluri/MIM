@@ -365,7 +365,7 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     bridgeColumnSet,
                     footerContainer,
                 },
-                Actions = !footer ? this.BuildActions(): new List<AdaptiveAction>(),
+                Actions = !footer ? this.BuildActions() : new List<AdaptiveAction>(),
             };
             var adaptiveCardAttachment = new Attachment()
             {
@@ -536,11 +536,6 @@ namespace Microsoft.Teams.Apps.Bart.Cards
             choiceSet.Value = "Incident Closed";
             choiceSet.Choices = new List<AdaptiveChoice>
                     {
-                        //new AdaptiveChoice
-                        //{
-                        //    Title = "Incident New",
-                        //    Value = "Incident New",
-                        //},
                         new AdaptiveChoice
                         {
                             Title = "Incident Closed",
@@ -549,28 +544,6 @@ namespace Microsoft.Teams.Apps.Bart.Cards
                     };
 
             return choiceSet;
-        }
-
-        public static Attachment TestCard(string contents)
-        {
-            AdaptiveCard card = new AdaptiveCard("1.2")
-            {
-                Body = new List<AdaptiveElement>
-                {
-                    new AdaptiveTextBlock
-                    {
-                        Text = contents,
-                        Wrap = true,
-                    },
-                },
-            };
-            var adaptiveCardAttachment = new Attachment()
-            {
-                ContentType = AdaptiveCard.ContentType,
-                Content = card,
-            };
-
-            return adaptiveCardAttachment;
         }
     }
 }

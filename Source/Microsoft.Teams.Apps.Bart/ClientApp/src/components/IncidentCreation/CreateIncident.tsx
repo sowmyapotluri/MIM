@@ -1,8 +1,7 @@
 ﻿import * as React from 'react';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
-import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, TextArea } from '@fluentui/react';
-
+import { Input, Loader, Button, Flex, FlexItem, Text, Icon as FluentIcon, Dropdown, DropdownProps, Checkbox, TextArea, CheckboxProps } from '@fluentui/react';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { AddIcon } from '@fluentui/react-icons-northstar'
 import "./CreateIncident.scss";
@@ -81,7 +80,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     private shortDescription = "";
     private description = "";
     private scope = "";
-    private status = "";
+    private TSC: boolean | null = null;
     private incidentPriority: number = 0;
     private list: number[] = [];
     token?: string | null = null;
@@ -89,7 +88,9 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
     fetchedDescription: string | null = null;
     requestedBy?: IUser | null = null;
     requestedFor?: IUser | null = null;
-    // appInsights: ApplicationInsights;
+    /**Logged in user */
+    userObjectId?: string | null = null;
+    appInsights: ApplicationInsights;
 
     constructor(props: ICreateIncidentProps) {
         super(props);
@@ -139,19 +140,19 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         this.shortDescription = this.fetchedDescription !== null && this.fetchedDescription.length < 250 ? this.fetchedDescription : "";
         this.description = this.fetchedDescription !== null ? this.fetchedDescription : "";
         this.scope = "";
-        this.status = "";
+        this.TSC = false;
         this.incidentPriority = 0;
         this.list = [1];
-        // this.appInsights = new ApplicationInsights({
-        //     config: {
-        //         instrumentationKey: this.telemetry,
-        //         extensions: [reactPlugin],
-        //         extensionConfig: {
-        //             [reactPlugin.identifier]: { history: browserHistory }
-        //         }
-        //     }
-        // });
-        // this.appInsights.loadAppInsights();
+        this.appInsights = new ApplicationInsights({
+            config: {
+                instrumentationKey: this.telemetry,
+                extensions: [reactPlugin],
+                extensionConfig: {
+                    [reactPlugin.identifier]: { history: browserHistory }
+                }
+            }
+        });
+        this.appInsights.loadAppInsights();
 
     };
 
@@ -160,7 +161,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         microsoftTeams.getContext((context) => {
             this.requestedBy!.id = context.userObjectId!;
             this.requestedBy!.userPrincipalName = context.userPrincipalName!;
-            console.log("microsoft teams", Date.now(), this.requestedBy!)
+            this.userObjectId = context.userObjectId;
         });
 
         document.removeEventListener("keydown", this.escFunction, false);
@@ -185,16 +186,9 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             if (res.status === 401) {
                 const response = await res.json();
                 if (response) {
-                    // this.setState({
-                    //     errorResponseDetail: {
-                    //         errorMessage: response.message,
-                    //         statusCode: response.code,
-                    //     }
-                    // })
-                }
 
-                // this.setState({ authorized: false });
-                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+                }
+                this.appInsights.trackTrace({ message: `User ${this.userObjectId} is unauthorized!`, severityLevel: SeverityLevel.Warning });
                 return response;
             }
             else if (res.status === 200) {
@@ -218,8 +212,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 });
             }
             else {
-                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `'Get bridges' - Request failed:${res.status}`, severityLevel: SeverityLevel.Error });
             }
 
         });
@@ -243,7 +236,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         console.log("D", (e.target as HTMLInputElement).value)
         this.description = (e.target as HTMLInputElement).value;
         this.setState({
-            description : this.description
+            description: this.description
         });
     }
 
@@ -255,7 +248,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
         console.log("Priority", (Number)(Object.values(Priority).find((key: any) => Priority[key] === dropdownProps!.value!)))
         this.incidentPriority = (Number)(Object.values(Priority).find((key: any) => Priority[key] === dropdownProps!.value!));
         this.setState({
-            
+
         });
     }
 
@@ -331,8 +324,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                     // })
                 }
 
-                // this.setState({ authorized: false });
-                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `User ${this.userObjectId} is unauthorized!`, severityLevel: SeverityLevel.Warning });
             }
             else if (res.status === 200) {
                 let response = await res.json();
@@ -340,28 +332,16 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                     loader: false,
                     users: response
                 });
-                // let values: IUser[] = response.map((users: IUser)=>{
-                //     let user: IUser = {
-                //         displayName: users.displayName,
-                //         id: users.id,
-                //         userPrincipalName: users.userPrincipalName
-                //     }
-                // })
-                // for (let i =0; i < response.length; i++){
-                //     let user: IUser = {
-                //         displayName: response[i].displayName,
-                //         id: response[i].id,
-                //         userPrincipalName: response[i].userPrincipalName
-                //     }
-                //     values.push(user);
-                // }
             }
             else {
-                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `'GetUsers-Flag1' - Request failed:${res.status}`, severityLevel: SeverityLevel.Error });
             }
 
         });
+    }
+
+    private tscCheckboxChanged = async (e: React.SyntheticEvent<HTMLElement, Event>, v?: CheckboxProps) => {
+        this.TSC = v!.checked!;
     }
 
     private createIncident = async () => {
@@ -382,6 +362,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                 RequestedById: this.requestedBy!.id!,
                 RequestedFor: isNullOrUndefined(this.requestedFor) ? this.requestedBy!.displayName! : this.requestedFor!.displayName!,
                 RequestedForId: isNullOrUndefined(this.requestedFor) ? this.requestedBy!.id! : this.requestedFor!.id!,
+                TSC: this.TSC
             },
             Workstreams: this.state.workstreams
         };
@@ -404,26 +385,20 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                     // })
                 }
 
-                // this.setState({ authorized: false });
-                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `User ${this.userObjectId} is unauthorized!`, severityLevel: SeverityLevel.Warning });
                 return response;
             }
             else if (res.status === 200) {
                 let response = await res.json();
-                // this.setState({
-                //     loader: false
-                // }, () => {
                 let toBot: IIncident = response;
                 toBot.bridge = this.state.selectedBridge.code.toString();
                 toBot.bridgeDetails = this.state.selectedBridge;
                 toBot.scope = this.scope;
                 toBot.priority = this.incidentPriority.toString();
                 microsoftTeams.tasks.submitTask(toBot);
-                // });
             }
             else {
-                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `'Create incident' - Request failed:${res.status}`, severityLevel: SeverityLevel.Error });
             }
 
         });
@@ -494,10 +469,9 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             });
         });
 
-        console.log("User", userInput[userInput.findIndex((user=> user.content === this.requestedBy!.userPrincipalName))], userInput.findIndex((user=> user.content === this.requestedBy!.userPrincipalName)))
+        console.log("User", userInput[userInput.findIndex((user => user.content === this.requestedBy!.userPrincipalName))], userInput.findIndex((user => user.content === this.requestedBy!.userPrincipalName)))
 
         let workstreamBlock: JSX.Element[] = (this.state.workstreams.map((workstream: IWorkstream, index: number) => {
-            console.log("Refresh!", this.state.workstreams[index].description, workstream.description)
             let items = this.state.workstreams.map(item => item.priority)
             return (
                 <div>
@@ -543,7 +517,7 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
                     <div hidden={index !== this.state.workstreams.length - 1}>
                         <Flex gap="gap.smaller">
                             {/* <Icon iconName="add" className="pos-rel ft-18 ft-bld icon-sm" /> */}
-                            <Button text icon={<FluentIcon name="add"/>} content={"Add another workstream"} onClick={this.addWorkstreams}
+                            <Button text icon={<FluentIcon name="add" />} content={"Add another workstream"} onClick={this.addWorkstreams}
                                 disabled={this.state.workstreams[this.state.workstreams.length - 1].description === ""
                                     && this.state.workstreams[this.state.workstreams.length - 1].assignedTo === ""} />
                         </Flex>
@@ -559,138 +533,138 @@ export default class CreateIncident extends React.Component<ICreateIncidentProps
             return (
                 <div className="emptyContent">
                     <Loader />
-                    <Text content = {this.state.loaderText} size = "small"/>
+                    <Text content={this.state.loaderText} size="small" />
                 </div>
             );
         }
         else {
             return (
                 <div className="">
-                <div className="taskModule">
-                    <div className="formContainer">
-                        <div className="row">
-                            <div className="col-md-12">
-                                <Flex gap="gap.smaller">
-                                    <Text content="Individual requesting incident" />
-                                </Flex>
-                            </div>
-                        </div>
-                        <div className="custom">
+                    <div className="taskModule">
+                        <div className="formContainer">
                             <div className="row">
-                                <div className="col-md-4 col-lg-4">
-                                    <Dropdown
-                                        className="md-input"
-                                        clearable
-                                        search
-                                        id="requestedBy"
-                                        onSearchQueryChange={this.getUsers}
-                                        items={userInput}
-                                        placeholder="Start typing a name"
-                                        onSelectedChange={this.requestedAssigned}
-                                        defaultSearchQuery={this.requestedBy!.displayName}
-                                    />
-                                </div>
-                            </div>
-                            <div className="row">
-                                <div className="col-md-8 marginForInputs">
+                                <div className="col-md-12">
                                     <Flex gap="gap.smaller">
-                                        <Text content="Short description(Note: max 250 characters)" />
-                                    </Flex>
-                                    <Flex gap="gap.smaller">
-                                        <Input fluid className="inputField" defaultValue={this.shortDescription} placeholder="Short description" name="shortDescriptionTitle" onChange={this.onShortDescriptionChange} />
-                                    </Flex>
-                                    <Flex gap="gap.smaller">
-                                        <Text className="fontItalic" hidden={!(this.state.shortDescription.length > 250)} content="Short description should be less than 250 characters" size="small" error />
-                                    </Flex>
-                                </div>
-                                <div className="col-md-4 marginForInputs">
-                                    <Flex gap="gap.smaller">
-                                        <Text content="Scope" />
-                                    </Flex>
-                                    <Flex gap="gap.smaller">
-                                        <Input fluid className="inputField" defaultValue={this.scope} placeholder="Scope" name="scopeTitle" onChange={this.onScopeChange} />
-
+                                        <Text content="Individual requesting incident" />
                                     </Flex>
                                 </div>
                             </div>
-                            <div className="row paddingForContent marginForInputs">
-                                <div className="col-md-8">
-                                    <Flex gap="gap.smaller" column>
-                                        <Text content="Description of the reported problem" />
-                                        <TextArea fluid className="inputField textarea" defaultValue={this.description} placeholder="Description" name="descriptionTitle" onChange={this.onDescriptionChange} />
-                                    </Flex>
+                            <div className="custom">
+                                <div className="row">
+                                    <div className="col-md-4 col-lg-4">
+                                        <Dropdown
+                                            className="md-input"
+                                            clearable
+                                            search
+                                            id="requestedBy"
+                                            onSearchQueryChange={this.getUsers}
+                                            items={userInput}
+                                            placeholder="Start typing a name"
+                                            onSelectedChange={this.requestedAssigned}
+                                            defaultSearchQuery={this.requestedBy!.displayName}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="col-md-4">
+                                <div className="row">
+                                    <div className="col-md-8 marginForInputs">
+                                        <Flex gap="gap.smaller">
+                                            <Text content="Short description(Note: max 250 characters)" />
+                                        </Flex>
+                                        <Flex gap="gap.smaller">
+                                            <Input fluid className="inputField" defaultValue={this.shortDescription} placeholder="Short description" name="shortDescriptionTitle" onChange={this.onShortDescriptionChange} />
+                                        </Flex>
+                                        <Flex gap="gap.smaller">
+                                            <Text className="fontItalic" hidden={!(this.state.shortDescription.length > 250)} content="Short description should be less than 250 characters" size="small" error />
+                                        </Flex>
+                                    </div>
+                                    <div className="col-md-4 marginForInputs">
+                                        <Flex gap="gap.smaller">
+                                            <Text content="Scope" />
+                                        </Flex>
+                                        <Flex gap="gap.smaller">
+                                            <Input fluid className="inputField" defaultValue={this.scope} placeholder="Scope" name="scopeTitle" onChange={this.onScopeChange} />
 
-                                    <Flex gap="gap.smaller" column>
-                                        <Text content="Conference bridge" />
-                                        <Dropdown
-                                            className="select-wrapper"
-                                            items={bridgeCodes}
-                                            placeholder="Select conference bridges"
-                                            noResultsMessage="We couldn't find any matches."
-                                            onSelectedChange={this.setBridge}
-                                        />
-                                    </Flex>
-                                    <Flex gap="gap.smaller" column className="mt-3">
-                                        <Text content="Priority" />
-                                        <Dropdown
-                                            className="select-wrapper"
-                                            items={Object.keys(Priority).filter(x => !(parseInt(x) >= 0))}
-                                            placeholder="Select priority"
-                                            noResultsMessage="We couldn't find any matches."
-                                            onSelectedChange={this.onPriorityChange}
-                                        />
-                                        {/* <Input className="inputField" value={this.state.title} placeholder="Search title goes here" name="txtTitle" /> */}
-                                    </Flex>
+                                        </Flex>
+                                    </div>
+                                </div>
+                                <div className="row paddingForContent marginForInputs">
+                                    <div className="col-md-8">
+                                        <Flex gap="gap.smaller" column>
+                                            <Text content="Description of the reported problem" />
+                                            <TextArea fluid className="inputField textarea" defaultValue={this.description} placeholder="Description" name="descriptionTitle" onChange={this.onDescriptionChange} />
+                                        </Flex>
+                                    </div>
+                                    <div className="col-md-4">
+
+                                        <Flex gap="gap.smaller" column>
+                                            <Text content="Conference bridge" />
+                                            <Dropdown
+                                                className="select-wrapper"
+                                                items={bridgeCodes}
+                                                placeholder="Select conference bridges"
+                                                noResultsMessage="We couldn't find any matches."
+                                                onSelectedChange={this.setBridge}
+                                            />
+                                        </Flex>
+                                        <Flex gap="gap.smaller" column className="mt-3">
+                                            <Text content="Priority" />
+                                            <Dropdown
+                                                className="select-wrapper"
+                                                items={Object.keys(Priority).filter(x => !(parseInt(x) >= 0))}
+                                                placeholder="Select priority"
+                                                noResultsMessage="We couldn't find any matches."
+                                                onSelectedChange={this.onPriorityChange}
+                                            />
+                                            {/* <Input className="inputField" value={this.state.title} placeholder="Search title goes here" name="txtTitle" /> */}
+                                        </Flex>
+                                    </div>
+                                </div>
+                                <div className="row my-3">
+                                    <div className="col-md-12">
+                                        <Flex>
+                                            <Text content="TSC request" className="mt-1 mr-2" />
+                                            <Checkbox label="Did this request originated from technology support center" onClick={this.tscCheckboxChanged} />
+                                        </Flex>
+                                    </div>
                                 </div>
                             </div>
                             <div className="row my-3">
                                 <div className="col-md-12">
-                                    <Flex>
-                                        <Text content="TSC request" className="mt-1 mr-2" />
-                                        <Checkbox label="Did this request originated from technology support center" />
-                                    </Flex>
+                                    <Text className="h5 bold" content="Create workstream" />
                                 </div>
                             </div>
-                        </div>
-                        <div className="row my-3">
-                            <div className="col-md-12">
-                                <Text className="h5 bold" content="Create workstream" />
+                            <div className="row my-1">
+                                <div className="col-md-2 pr-1">
+                                    <Text content="Priorty" />
+                                </div>
+                                <div className="col-md-5 px-1">
+                                    <Text content="Description" />
+                                </div>
+                                <div className="col-md-3 px-1">
+                                    <Text content="Assigned to" />
+                                </div>
+                                <div className="col-md-2 pl-1">
+                                    <Text content="Status" />
+                                </div>
                             </div>
-                        </div>
-                        <div className="row my-1">
-                            <div className="col-md-2 pr-1">
-                                <Text content="Priorty" />
-                            </div>
-                            <div className="col-md-5 px-1">
-                                <Text content="Description" />
-                            </div>
-                            <div className="col-md-3 px-1">
-                                <Text content="Assigned to" />
-                            </div>
-                            <div className="col-md-2 pl-1">
-                                <Text content="Status" />
-                            </div>
-                        </div>
-                        {workstreamBlock}
+                            {workstreamBlock}
 
-                        <div className="footerContainer">
-                            {/* <div className="buttonContainer"> */}
+                            <div className="footerContainer">
+                                {/* <div className="buttonContainer"> */}
                                 <Flex gap="gap.small">
                                     <FlexItem grow>
-                                        <Text content=""/>
+                                        <Text content="" />
                                     </FlexItem>
                                     <FlexItem push>
-                                        <Button content="Submit" primary className="bottomButton" onClick={this.createIncident} 
-                                        disabled = {this.shortDescription === "" || this.description === "" || this.incidentPriority == 0 }
+                                        <Button content="Submit" primary className="bottomButton" onClick={this.createIncident}
+                                            disabled={this.shortDescription === "" || this.description === "" || this.incidentPriority == 0}
                                         />
                                     </FlexItem>
                                 </Flex>
-                            {/* </div> */}
+                                {/* </div> */}
+                            </div>
                         </div>
-                    </div>
-                </div >
+                    </div >
                 </div>
             );
         }

@@ -80,7 +80,9 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
     incidentNumber?: string | null = null;
     incidentId?: string | null = null;
     assignedToChanged?: boolean = false;
-    // appInsights: ApplicationInsights;
+    /**Logged in user */
+    userObjectId?: string | null = null;
+    appInsights: ApplicationInsights;
     workstream: IWorkstream = {
         priority: 1,
         description: "",
@@ -128,22 +130,23 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
         this.token = params.get("token");
         this.incidentNumber = params.get("incident");
         this.incidentId = params.get("id");
-        // this.appInsights = new ApplicationInsights({
-        //     config: {
-        //         instrumentationKey: this.telemetry,
-        //         extensions: [reactPlugin],
-        //         extensionConfig: {
-        //             [reactPlugin.identifier]: { history: browserHistory }
-        //         }
-        //     }
-        // });
-        // this.appInsights.loadAppInsights();
+        this.appInsights = new ApplicationInsights({
+            config: {
+                instrumentationKey: this.telemetry,
+                extensions: [reactPlugin],
+                extensionConfig: {
+                    [reactPlugin.identifier]: { history: browserHistory }
+                }
+            }
+        });
+        this.appInsights.loadAppInsights();
 
     };
 
     public componentDidMount = async () => {
         microsoftTeams.initialize();
         microsoftTeams.getContext((context) => {
+            this.userObjectId = context.userObjectId;
             console.log("microsoft teams", context)
         });
         document.removeEventListener("keydown", this.escFunction, false);
@@ -209,6 +212,9 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                 // });
 
             }
+            else {
+                this.appInsights.trackTrace({ message: `'Get all workstream' - Request failed:${res[0].status}`, severityLevel: SeverityLevel.Error });
+            }
 
             if (res[1].status === 200) {
                 let response: IUser = await res[1].json();
@@ -217,6 +223,9 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     incidentAssignedTo: response,
                     loader: false,
                 })
+            }
+            else {
+                this.appInsights.trackTrace({ message: `'AssignedUser' - Request failed:${res[0].status}`, severityLevel: SeverityLevel.Error });
             }
         });
     }
@@ -277,8 +286,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     // })
                 }
 
-                // this.setState({ authorized: false });
-                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `User is unauthorized!`, severityLevel: SeverityLevel.Error });
             }
             else if (res.status === 200) {
                 let response = await res.json();
@@ -286,25 +294,9 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     loader: false,
                     users: response
                 });
-                // let values: IUser[] = response.map((users: IUser)=>{
-                //     let user: IUser = {
-                //         displayName: users.displayName,
-                //         id: users.id,
-                //         userPrincipalName: users.userPrincipalName
-                //     }
-                // })
-                // for (let i =0; i < response.length; i++){
-                //     let user: IUser = {
-                //         displayName: response[i].displayName,
-                //         id: response[i].id,
-                //         userPrincipalName: response[i].userPrincipalName
-                //     }
-                //     values.push(user);
-                // }
             }
             else {
-                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `'GetUsersAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Error });
             }
 
         });
@@ -329,8 +321,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     // })
                 }
 
-                // this.setState({ authorized: false });
-                // this.appInsights.trackTrace({ message: `User ${this.userObjectIdentifier} is unauthorized!`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `User ${this.userObjectId} is unauthorized!`, severityLevel: SeverityLevel.Warning });
             }
             else if (res.status === 200) {
                 let response = await res.json();
@@ -340,8 +331,7 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                 });
             }
             else {
-                // this.setMessage(this.state.resourceStrings.ExceptionResponse, Constants.ErrorMessageRedColor, false);
-                // this.appInsights.trackTrace({ message: `'SearchRoomAsync' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
+                this.appInsights.trackTrace({ message: `'GetUsersAync-Flag=0' - Request failed:${res.status}`, severityLevel: SeverityLevel.Warning });
             }
 
         });
@@ -673,11 +663,11 @@ export default class EditWorkstream extends React.Component<{}, IWorkstreamState
                     </div>
                     <div className="footerContainer">
                         {/* <div className="buttonContainer"> */}
-                            <Flex gap="gap.small">
-                                <FlexItem push>
-                                    <Button content="Submit" primary className="bottomButton" onClick={this.submitWorkstreams} />
-                                </FlexItem>
-                            </Flex>
+                        <Flex gap="gap.small">
+                            <FlexItem push>
+                                <Button content="Submit" primary className="bottomButton" onClick={this.submitWorkstreams} />
+                            </FlexItem>
+                        </Flex>
                         {/* </div> */}
                     </div>
                 </div >
