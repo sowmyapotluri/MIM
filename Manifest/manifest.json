@@ -1,0 +1,186 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.7/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.7",
+  "version": "1",
+  "id": "<<botid>>",
+  "packageName": "com.microsoft.teams.bart",
+  "developer": {
+    "name": "<<companyName>>",
+    "websiteUrl": "<<websiteUrl>>",
+    "privacyUrl": "<<privacyUrl>>",
+    "termsOfUseUrl": "<<termsOfUseUrl>>"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "BART",
+    "full": "BART"
+  },
+  "description": {
+    "short": "<<Short description>>",
+    "full": "<<Description>>"
+  },
+  "accentColor": "#235EA5",
+  "bots": [
+    {
+      "botId": "<<botid>>",
+      "scopes": [
+        "personal",
+        "team"
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "composeExtensions": [
+    {
+      "botId": "<<botid>>",
+      "canUpdateConfiguration": false,
+      "commands": [
+        {
+          "id": "recents",
+          "type": "query",
+          "title": "Recent",
+          "description": "Search recent incidents",
+          "initialRun": true,
+          "fetchTask": false,
+          "context": [
+            "compose"
+          ],
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "Search",
+              "description": "Search incidents",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "newincidents",
+          "type": "query",
+          "title": "New",
+          "description": "Search new incidents",
+          "initialRun": true,
+          "fetchTask": false,
+          "context": [
+            "compose"
+          ],
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "Search",
+              "description": "Search incidents",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "suspendedincidents",
+          "type": "query",
+          "title": "Suspended",
+          "description": "Search suspended incidents",
+          "initialRun": true,
+          "fetchTask": false,
+          "context": [
+            "compose"
+          ],
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "Search",
+              "description": "Search incidents",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "servicerestoredincidents",
+          "type": "query",
+          "title": "Service restored",
+          "description": "Search service restored incidents",
+          "initialRun": true,
+          "fetchTask": false,
+          "context": [
+            "compose"
+          ],
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "Search",
+              "description": "Search incidents",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "allincidents",
+          "type": "query",
+          "title": "All",
+          "description": "Search all incidents",
+          "initialRun": true,
+          "fetchTask": false,
+          "context": [
+            "compose"
+          ],
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "Search",
+              "description": "Search incidents",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "addincident",
+          "type": "action",
+          "title": "Create new incident",
+          "description": "Create new incident from a message",
+          "initialRun": true,
+          "fetchTask": true,
+          "context": [
+            "compose",
+            "message"
+          ],
+          "parameters": [
+            {
+              "name": "param",
+              "title": "param",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "id": "viewincident",
+          "type": "action",
+          "title": "View incidents",
+          "description": "View incident details",
+          "initialRun": true,
+          "fetchTask": true,
+          "context": [
+            "compose",
+            "message"
+          ],
+          "parameters": [
+            {
+              "name": "param",
+              "title": "param",
+              "description": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "[baseresourcename].azurewebsites.net",
+    "token.botframework.com"
+  ]
+}
