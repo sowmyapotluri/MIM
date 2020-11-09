@@ -32,7 +32,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]/[action]")]
-    //[Authorize]
+    [Authorize]
     public class WorkstreamApiController : ControllerBase
     {
 

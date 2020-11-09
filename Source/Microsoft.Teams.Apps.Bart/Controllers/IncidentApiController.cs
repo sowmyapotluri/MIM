@@ -32,7 +32,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]/[action]")]
-    //[Authorize]
+    [Authorize]
     public class IncidentApiController : ControllerBase
     {
         /// <summary>
@@ -292,7 +292,7 @@ namespace Microsoft.Teams.Apps.Bart.Controllers
                 var claims = this.GetUserClaims();
                 this.telemetryClient.TrackTrace($"User {claims.UserObjectIdentifer} submitted request to get supported time zones.");
 
-                var token = await this.tokenHelper.GetUserTokenAsync("29:1gMQTXLxN-dQImkrSeGvgGSvxl4VTOaSuwdqnH8RuWvysIlFR3rJRwy6vZGmiiR3BDHzJUZxDpegnBNWhbNGFTw").ConfigureAwait(false);
+                var token = await this.tokenHelper.GetUserTokenAsync(claims.FromId).ConfigureAwait(false);
                 if (string.IsNullOrEmpty(token))
                 {
                     this.telemetryClient.TrackTrace($"Azure Active Directory access token for user {claims.UserObjectIdentifer} is empty.");

@@ -58,6 +58,7 @@ namespace Microsoft.Teams.Apps.Bart
         /// <param name="services">Collection of services.</param>
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddApplicationInsightsTelemetry();
             services.AddHttpClient<IGraphApiHelper, GraphApiHelper>("GraphApiHelper", httpClient =>
             {
                 httpClient.BaseAddress = new Uri("https://graph.microsoft.com");
